@@ -1,0 +1,118 @@
+---
+import Topo from '../contour/Topo.astro';
+/**
+ * <Steps>: scrollytelling. Numbered <Step>s on the left; a sticky panel on the right (named slot "panel")
+ * whose [data-node="n"] parts light up as each step is read.
+ * - Without JS: a plain numbered list, with the panel fully lit.
+ * - Phones: the panel sits above the list (not sticky).
+ */
+interface Props {
+  label?: string;
+}
+const { label } = Astro.props;
+---
+
+<div class="steps" data-steps data-wide>
+  <div class="panel">
+    <div class="panel-inner">
+      <Topo x="20%" y="85%" fade="linear-gradient(rgb(0 0 0 / 0.45), rgb(0 0 0 / 0.45))" />
+      <slot name="panel" />
+    </div>
+  </div>
+  <ol class="list" role="list" aria-label={label}>
+    <slot />
+  </ol>
+</div>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-steps]').forEach((root) => {
+    const steps = Array.from(root.querySelectorAll<HTMLElement>('[data-step]'));
+    const nodes = Array.from(root.querySelectorAll<SVGElement | HTMLElement>('[data-node]'));
+    if (!steps.length || !nodes.length || !('IntersectionObserver' in window)) return;
+    // Only on wide screens, where the panel stays beside the steps. On phones everything stays lit.
+    const wide = window.matchMedia('(min-width: 960px)');
+    let current = 1;
+
+    const light = (n: number) => {
+      nodes.forEach((el) => {
+        const k = Number(el.getAttribute('data-node'));
+        el.classList.toggle('lit', k <= n);
+        el.classList.toggle('current', k === n);
+      });
+      steps.forEach((s) => s.classList.toggle('is-current', Number(s.dataset.step) === n));
+    };
+    const apply = () => {
+      root.classList.toggle('is-live', wide.matches);
+      light(current);
+    };
+    wide.addEventListener('change', apply);
+    apply();
+
+    // The current step is the one crossing a line 45% down the viewport.
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) if (e.isIntersecting) {
+          current = Number((e.target as HTMLElement).dataset.step);
+          light(current);
+        }
+      },
+      { rootMargin: '-45% 0px -54% 0px' },
+    );
+    steps.forEach((s) => io.observe(s));
+  });
+</script>
+
+<style>
+  .steps {
+    display: grid;
+    gap: var(--s-6);
+    margin: var(--s-7) 0;
+  }
+  .panel-inner {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    max-width: 22rem;
+    margin-inline: auto;
+    padding: var(--s-5);
+    border-radius: var(--r-lg);
+    background: var(--surface-2);
+  }
+  .list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  @media (min-width: 960px) {
+    .steps {
+      position: relative;
+      z-index: 1;
+      width: min(var(--w-content), calc(100vw - 2 * var(--gutter)));
+      margin-inline: calc((min(var(--w-content), calc(100vw - 2 * var(--gutter))) - 100%) / -2);
+      grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+      gap: var(--s-8);
+      align-items: start;
+    }
+    .panel {
+      grid-column: 2;
+      grid-row: 1;
+      position: sticky;
+      top: calc(var(--header-h) + 24px);
+    }
+    .panel-inner {
+      max-width: none;
+      height: min(calc(100vh - var(--header-h) - 48px), 46rem);
+    }
+    .panel-inner > :global(svg) {
+      display: block;
+      height: 100%;
+      width: auto;
+      max-width: 100%;
+      margin-inline: auto;
+    }
+    .list {
+      grid-column: 1;
+      grid-row: 1;
+    }
+  }
+</style>

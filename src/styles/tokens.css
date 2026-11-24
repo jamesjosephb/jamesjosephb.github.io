@@ -1,0 +1,140 @@
+/* "Contour" design tokens. The light values are defined first (and used for printing); on screen the dark values
+   apply unless [data-theme='light'] is set. The inline script in Base.astro always sets data-theme when JS runs. */
+
+:root {
+  color-scheme: light;
+  /* "Contour" palette: blues sampled from the 2022 banner photo (sky #75BBFF, lake #4595E8, plaid navy #123894). */
+  --bg: #edf1f4;
+  --surface: #ffffff;
+  --surface-2: #e2e9ef;
+  --border: #c5d0da;
+  --text: #122030;
+  --muted: #4a5868;
+  /* Accent: links, labels, section numbers, focus, primary buttons. */
+  --accent: #1b5e9e;
+  --accent-fill: #1b5e9e;
+  --on-accent: #ffffff;
+  --accent-soft: #d3e7fb;
+  /* Highlighter behind key words (was lime). Kept as --signal so components didn't need renaming. */
+  --signal: #d3e7fb;
+  --on-signal: #0e2a4a;
+  --gate: #a8461f;
+  --focus: #1b5e9e;
+  --frame-shadow: 0 24px 48px -24px rgb(15 27 39 / 0.22), 0 2px 6px rgb(15 27 39 / 0.06);
+  /* Map lines */
+  --contour: #cfd9e2;
+  --contour-index: #bac8d5;
+  --contour-label: #6a7b8e;
+  --contour-stream: #b4cde5;
+  --hillshade: rgb(18 32 48 / 0.09);
+  /* Page-coloured halo behind text that sits on the map (.on-map, .halo), as map labels have. A dense stack, so a
+     contour line can't show through between letters. */
+  --halo: 0 0 1px var(--bg), 0 0 2px var(--bg), 0 0 3px var(--bg), 0 0 4px var(--bg), 0 0 6px var(--bg),
+    0 0 8px var(--bg), 0 0 12px var(--bg), 0 0 16px var(--bg), 0 0 22px var(--bg);
+  /* Small letter-spaced labels on the map also get a page-coloured box, as printed map labels do. Off in dark. */
+  --knockout: var(--bg);
+  /* Terminal surfaces (agent run, terminal frames): dark in both themes. */
+  --term-bg: #0f1b27;
+  --term-bg-2: #15253a;
+  --term-border: #24374a;
+  --term-text: #dde6ee;
+  --term-muted: #8b9cad;
+  --term-accent: #75bbff;
+  --term-on-accent: #0e1a38;
+  --term-tag-bg: #17324f;
+  --term-tag: #bfddff;
+  --term-gate: #ff9a6b;
+  --term-shadow: 0 30px 60px -30px rgb(15 27 39 / 0.45);
+
+  /* Type. Fonts come from the Astro Fonts API: --font-sans (Hanken Grotesk) and --font-mono (DM Mono). */
+  --font-display: var(--font-sans);
+  --font-text: var(--font-sans);
+  --fs-display: clamp(3.25rem, 2.2rem + 4.4vw, 6rem);
+  --fs-h1: clamp(2.5rem, 1.9rem + 2.6vw, 4rem);
+  --fs-h2: clamp(1.75rem, 1.45rem + 1.3vw, 2.5rem);
+  --fs-h3: clamp(1.25rem, 1.15rem + 0.45vw, 1.5rem);
+  --fs-body: clamp(1.0625rem, 1.04rem + 0.1vw, 1.125rem);
+  --fs-small: 0.875rem;
+  --fs-label: 0.75rem;
+
+  /* Space (4 px base) */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+  --s-7: 48px;
+  --s-8: 64px;
+  --s-9: 96px;
+  --s-10: 128px;
+  --section-gap: clamp(64px, 6vw + 32px, 128px);
+
+  /* Layout */
+  --w-prose: 66ch;
+  --w-content: 72rem;
+  --w-wide: 88rem;
+  /* Never narrower than the iPhone safe areas (viewport-fit=cover in Base.astro). */
+  --gutter: max(16px, env(safe-area-inset-left), env(safe-area-inset-right));
+  --header-h: 56px;
+
+  /* Shape */
+  --r-sm: 6px;
+  --r-md: 12px;
+  --r-lg: 20px;
+
+  /* Motion */
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --t-hover: 150ms;
+  --t-ui: 250ms;
+  --t-reveal: 550ms;
+}
+
+@media (min-width: 640px) {
+  :root {
+    --gutter: max(24px, env(safe-area-inset-left), env(safe-area-inset-right));
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --gutter: max(40px, env(safe-area-inset-left), env(safe-area-inset-right));
+  }
+}
+
+/* Dark is the default: it applies unless the page is explicitly light (the visitor's stored choice, set by the
+   inline script in Base.astro before first paint). Screen only, so printing always uses the light tokens above. */
+@media screen {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --bg: #0e1720;
+    --surface: #142029;
+    --surface-2: #1a2833;
+    --border: #263845;
+    --text: #e3eaf0;
+    --muted: #93a3b3;
+    --accent: #75bbff;
+    --accent-fill: #75bbff;
+    --on-accent: #0e1a38;
+    --accent-soft: #173653;
+    --signal: #173653;
+    --on-signal: #d7eafe;
+    --gate: #ff9a6b;
+    --focus: #75bbff;
+    --frame-shadow: 0 24px 48px -24px rgb(0 0 0 / 0.6), 0 2px 6px rgb(0 0 0 / 0.3);
+    --contour: #1c2b37;
+    --contour-index: #2a3f52;
+    --contour-label: #6e8297;
+    --contour-stream: #1b354d;
+    --hillshade: rgb(0 0 0 / 0.38);
+    --halo: 0 0 1px var(--bg), 0 0 2px var(--bg), 0 0 3px var(--bg), 0 0 4px var(--bg), 0 0 6px var(--bg),
+      0 0 8px var(--bg), 0 0 12px var(--bg), 0 0 16px var(--bg), 0 0 22px var(--bg);
+    --knockout: transparent;
+    --term-bg: #0a1219;
+    --term-bg-2: #101c27;
+    --term-border: #22313e;
+    --term-muted: #8394a6;
+    --term-tag-bg: #163049;
+    --term-shadow: 0 24px 48px -24px rgb(0 0 0 / 0.6), 0 2px 6px rgb(0 0 0 / 0.3);
+  }
+}

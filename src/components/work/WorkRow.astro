@@ -1,0 +1,170 @@
+---
+/**
+ * <WorkRow>: one work entry as a linked row (label, title, one or two sentences, role · when · stack), with the
+ * entry's cover as a small thumbnail when it has one. Used on /work/ and the home page, fed from the collection,
+ * so the two can't drift apart. The whole row is clickable through the title link.
+ */
+import { Picture } from 'astro:assets';
+import { workHref, workMeta, type WorkEntry } from '../../lib/work';
+
+interface Props {
+  entry: WorkEntry;
+  level?: 'h2' | 'h3';
+  index?: number;
+}
+const { entry, level = 'h3', index = 0 } = Astro.props;
+const d = entry.data;
+const Title = level;
+const linkText = d.kind === 'personal' ? 'See the project' : 'Read the case study';
+// With a dark-theme cover, each theme shows its own (same rule as <Shot>); the hidden one is never fetched.
+const thumbs = d.cover
+  ? d.coverDark
+    ? [
+        { src: d.cover, attrs: { 'data-variant': 'light' } },
+        { src: d.coverDark, attrs: { 'data-variant': 'dark' } },
+      ]
+    : [{ src: d.cover, attrs: {} }]
+  : [];
+---
+
+<article class:list={['row', { 'has-thumb': !!d.cover }]} data-reveal style={`--reveal-i:${index}`}>
+  <div class="text">
+    <p class="label">
+      {d.eyebrow}{d.status && <span class="status"> · {d.status}</span>}
+    </p>
+    <Title class="title">
+      <a href={workHref(entry)}>{d.title}</a>
+    </Title>
+    <p class="summary">{d.cardSummary ?? d.summary}</p>
+    <p class="meta">{workMeta(entry)}</p>
+    <p class="more" aria-hidden="true">{linkText} <span class="arrow">→</span></p>
+  </div>
+  {
+    thumbs.length > 0 && (
+      <div class="thumb">
+        {thumbs.map((t) => (
+          <Picture
+            src={t.src}
+            alt=""
+            formats={['avif']}
+            fallbackFormat="webp"
+            widths={[400, 640, 960]}
+            sizes="(min-width: 900px) 400px, calc(100vw - 32px)"
+            quality={70}
+            loading="lazy"
+            decoding="async"
+            pictureAttributes={t.attrs}
+          />
+        ))}
+      </div>
+    )
+  }
+</article>
+
+<style>
+  .row {
+    position: relative;
+    display: grid;
+    gap: var(--s-5);
+    padding: var(--s-6);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    background: var(--surface);
+    transition:
+      transform var(--t-hover) var(--ease),
+      border-color var(--t-hover) var(--ease);
+  }
+  .row:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent);
+  }
+  .label {
+    margin-bottom: var(--s-3);
+  }
+  .status {
+    color: var(--muted);
+  }
+  .title {
+    margin-bottom: var(--s-3);
+    font-size: var(--fs-h3);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .title a {
+    color: var(--text);
+    text-decoration: none;
+  }
+  .title a::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+  }
+  .title a:focus-visible {
+    outline: none;
+  }
+  .row:has(a:focus-visible) {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+  }
+  .summary {
+    max-width: 60ch;
+    margin-bottom: var(--s-3);
+    color: var(--muted);
+  }
+  .meta {
+    margin-bottom: 0;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--muted);
+  }
+  .more {
+    margin: var(--s-4) 0 0;
+    font-weight: 600;
+    color: var(--accent);
+  }
+  .arrow {
+    display: inline-block;
+    transition: transform var(--t-hover) var(--ease);
+  }
+  .row:hover .arrow {
+    transform: translateX(4px);
+  }
+  .thumb {
+    overflow: hidden;
+    border-radius: var(--r-md);
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+  }
+  .thumb :global(img) {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+  }
+  /* Light/dark covers: dark on screen unless the page is explicitly light, light in print (as tokens.css). */
+  .thumb :global(picture[data-variant='dark']) {
+    display: none;
+  }
+  @media screen {
+    :global(:root:not([data-theme='light'])) .thumb :global(picture[data-variant='dark']) {
+      display: block;
+    }
+    :global(:root:not([data-theme='light'])) .thumb :global(picture[data-variant='light']) {
+      display: none;
+    }
+  }
+  @media (min-width: 900px) {
+    .has-thumb {
+      grid-template-columns: 1fr 400px;
+      align-items: center;
+      gap: var(--s-7);
+    }
+  }
+  @media (max-width: 899px) {
+    .thumb {
+      order: -1;
+    }
+  }
+</style>

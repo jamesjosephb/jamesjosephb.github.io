@@ -1,0 +1,92 @@
+---
+import Base from '../layouts/Base.astro';
+import Hero from '../components/home/Hero.astro';
+import CredStrip from '../components/home/CredStrip.astro';
+import FeaturedCase from '../components/home/FeaturedCase.astro';
+import WorkRow from '../components/work/WorkRow.astro';
+import AboutTeaser from '../components/home/AboutTeaser.astro';
+import Contact from '../components/home/Contact.astro';
+import Topo from '../components/contour/Topo.astro';
+import { SITE } from '../site';
+import { getWork } from '../lib/work';
+
+// Rows under the featured band: every published entry except the featured one and any kept to /work/ (home: false).
+const more = (await getWork()).filter((e) => !e.data.featured && e.data.home);
+
+const person = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: 'James Burch',
+  url: Astro.site?.href,
+  jobTitle: SITE.jobTitle,
+  worksFor: { '@type': 'Organization', name: SITE.employer },
+  alumniOf: { '@type': 'CollegeOrUniversity', name: 'Colorado Technical University' },
+  address: { '@type': 'PostalAddress', addressRegion: 'CO', addressCountry: 'US' },
+  knowsAbout: ['AI agents', 'GitHub Copilot', 'C#', '.NET', 'Angular', 'REST APIs', 'Fintech'],
+  sameAs: [SITE.linkedin, SITE.github],
+};
+---
+
+<Base jsonLd={person}>
+  {/* One map sheet behind the whole page: full strength around the hero, fainter behind the reading sections. */}
+  <Topo
+    anchor="#home-summit"
+    x="50%"
+    y="130px"
+    fade="linear-gradient(to bottom, #000 0, #000 760px, rgb(0 0 0 / 0.4) 1200px, rgb(0 0 0 / 0.4) 100%)"
+  />
+  <Hero />
+  <CredStrip />
+  <FeaturedCase />
+
+  {
+    more.length > 0 && (
+      <section class="container section-tight" aria-labelledby="more-work">
+        <h2 id="more-work" class="label more-head">More work</h2>
+        <div class="rows">
+          {more.map((e, i) => (
+            <WorkRow entry={e} index={i} />
+          ))}
+        </div>
+        <p class="all">
+          <a href="/work/">
+            All work <span aria-hidden="true">→</span>
+          </a>
+        </p>
+      </section>
+    )
+  }
+
+  <AboutTeaser />
+  <Contact num="03" />
+</Base>
+
+<style>
+  .section-tight {
+    margin-top: var(--s-7);
+  }
+  .more-head {
+    margin: 0 0 var(--s-5);
+    padding-bottom: var(--s-3);
+    border-bottom: 1px solid var(--border);
+  }
+  .rows {
+    display: grid;
+    gap: var(--s-5);
+  }
+  .all {
+    margin: var(--s-5) 0 0;
+  }
+  .all a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    min-height: 44px;
+    font-weight: 600;
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .all a:hover {
+    text-decoration: underline;
+  }
+</style>

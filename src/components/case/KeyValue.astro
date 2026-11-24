@@ -1,0 +1,78 @@
+---
+/**
+ * <KeyValue>: a two-column list of short labelled facts, e.g. a technologies table or the "At a glance" block.
+ * `variant="glance"` draws it as a tinted panel.
+ */
+interface Props {
+  rows: { k: string; v: string }[];
+  label?: string;
+  variant?: 'table' | 'glance';
+}
+const { rows, label, variant = 'table' } = Astro.props;
+---
+
+<div class:list={['kv', variant]}>
+  {label && <p class="label kv-label">{label}</p>}
+  <dl>
+    {
+      rows.map((r) => (
+        <div class="row">
+          <dt>{r.k}</dt>
+          <dd>{r.v}</dd>
+        </div>
+      ))
+    }
+  </dl>
+</div>
+
+<style>
+  .kv {
+    margin: var(--s-6) 0;
+  }
+  .kv-label {
+    margin-bottom: var(--s-3);
+    color: var(--accent);
+  }
+  dl {
+    margin: 0;
+  }
+  .row {
+    display: grid;
+    gap: var(--s-1) var(--s-5);
+    padding: var(--s-3) 0;
+    border-top: 1px solid var(--border);
+  }
+  .table .row:last-child {
+    border-bottom: 1px solid var(--border);
+  }
+  dt {
+    font-family: var(--font-mono);
+    font-size: var(--fs-label);
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding-top: 0.2em;
+  }
+  dd {
+    margin: 0;
+  }
+  .glance {
+    padding: var(--s-5) var(--s-5) var(--s-3);
+    border-radius: var(--r-md);
+    border-left: 4px solid var(--accent);
+    background: var(--surface-2);
+  }
+  .glance .row:first-child {
+    border-top: 0;
+    padding-top: 0;
+  }
+  .glance .row {
+    border-color: var(--border);
+  }
+  @media (min-width: 640px) {
+    .row {
+      grid-template-columns: 10rem 1fr;
+    }
+  }
+</style>

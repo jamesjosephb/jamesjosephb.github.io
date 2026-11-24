@@ -1,0 +1,397 @@
+---
+/**
+ * <AgentRun>: a framed mini-terminal that plays a scripted agent transcript.
+ * - The full transcript is in the HTML; without JS or with reduced motion it shows complete and static.
+ * - With JS it reveals line by line (text never changes, so screen readers read the whole run),
+ *   loops, pauses when off-screen or when the tab is hidden, and has a visible pause/replay control.
+ * Owned by the pages track; the case study imports it: <AgentRun run={triageRun} />.
+ */
+import type { AgentRunData } from '../data/agent-runs/types';
+
+interface Props {
+  run: AgentRunData;
+  /** Accessible name for the region. */
+  label?: string;
+  class?: string;
+}
+
+const { run, label = 'Example agent run', class: className } = Astro.props;
+---
+
+<figure class:list={['agent-run', className]} data-agent-run aria-label={label}>
+  <div class="window">
+    <div class="chrome">
+      <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span class="title">{run.title}</span>
+      <button class="ctl" type="button" data-ctl hidden aria-label="Pause animation">
+        <svg class="i-pause" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"
+          ><rect x="3.5" y="3" width="3" height="10" rx="1"></rect><rect x="9.5" y="3" width="3" height="10" rx="1"
+          ></rect></svg
+        >
+        <svg class="i-play" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"
+          ><path d="M4.5 3.2v9.6a.6.6 0 0 0 .9.5l7.6-4.8a.6.6 0 0 0 0-1L5.4 2.7a.6.6 0 0 0-.9.5Z"></path></svg
+        >
+      </button>
+    </div>
+    <ol class="lines" role="list">
+      {
+        run.lines.map((line, i) => (
+          <li class:list={['line', line.kind, { indent: 'indent' in line && line.indent }]} style={`--i:${i}`}>
+            {line.kind === 'prompt' && (
+              <>
+                <span class="caret" aria-hidden="true">
+                  &gt;
+                </span>{' '}
+                <span class="type" style={`--chars:${line.text.length}`}>
+                  {line.text}
+                </span>
+              </>
+            )}
+            {line.kind === 'step' && <span>{line.text}</span>}
+            {line.kind === 'tool' && (
+              <>
+                <span class="tag">{line.label}</span> <span>{line.text}</span>
+              </>
+            )}
+            {line.kind === 'result' && <span>{line.text}</span>}
+            {line.kind === 'conclusion' && (
+              <>
+                <span class="tag">{line.label}:</span> <mark>{line.text}</mark>
+              </>
+            )}
+            {line.kind === 'gate' && (
+              <>
+                <span class="gate-row">
+                  <span class="square" aria-hidden="true" />
+                  <span>{line.text}</span>
+                </span>
+                {line.actions && (
+                  <span class="actions" aria-hidden="true">
+                    {line.actions.map((a, j) => (
+                      <span class:list={['chip', { primary: j === 0 }]}>{a}</span>
+                    ))}
+                  </span>
+                )}
+              </>
+            )}
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+  <figcaption class="note halo">{run.note}</figcaption>
+</figure>
+
+<script>
+  type State = { timers: number[]; playing: boolean; visible: boolean; done: boolean };
+
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  function setup(root: HTMLElement) {
+    const lines = Array.from(root.querySelectorAll<HTMLElement>('.line'));
+    const ctl = root.querySelector<HTMLButtonElement>('[data-ctl]');
+    const state: State = { timers: [], playing: false, visible: false, done: false };
+    if (!lines.length || !ctl) return;
+
+    const clear = () => {
+      state.timers.forEach((t) => window.clearTimeout(t));
+      state.timers = [];
+    };
+
+    const setCtl = () => {
+      ctl.dataset.state = state.playing ? 'playing' : 'paused';
+      ctl.setAttribute('aria-label', state.playing ? 'Pause animation' : 'Play animation');
+    };
+
+    function showAll() {
+      clear();
+      root.classList.remove('animating');
+      lines.forEach((l) => l.classList.add('shown'));
+    }
+
+    function play() {
+      clear();
+      state.playing = true;
+      state.done = false;
+      setCtl();
+      root.classList.add('animating');
+      lines.forEach((l) => l.classList.remove('shown'));
+      let t = 300;
+      lines.forEach((line, i) => {
+        const isPrompt = line.classList.contains('prompt');
+        const chars = Number(line.querySelector<HTMLElement>('.type')?.style.getPropertyValue('--chars') || 0);
+        state.timers.push(window.setTimeout(() => line.classList.add('shown'), t));
+        // Typing time for the prompt, a beat for "thinking", shorter gaps for results.
+        t += isPrompt ? Math.min(chars * 28, 1400) + 500 : line.classList.contains('step') ? 700 : 420;
+        if (i === lines.length - 1) {
+          state.timers.push(
+            window.setTimeout(() => {
+              state.done = true;
+              // Hold the finished run, then loop while visible and playing.
+              state.timers.push(
+                window.setTimeout(() => {
+                  if (state.playing && state.visible && !document.hidden) play();
+                }, 5000),
+              );
+            }, t),
+          );
+        }
+      });
+    }
+
+    function pause() {
+      state.playing = false;
+      setCtl();
+      showAll();
+    }
+
+    if (reduce.matches) {
+      showAll();
+      return;
+    }
+
+    ctl.hidden = false;
+    ctl.addEventListener('click', () => (state.playing ? pause() : play()));
+
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        state.visible = entry.isIntersecting;
+        if (!state.visible && state.playing) {
+          // Off-screen: stop and show the full run; replay when it comes back.
+          showAll();
+          root.dataset.resume = 'true';
+        } else if (state.visible && (root.dataset.resume === 'true' || (!state.playing && !root.dataset.started))) {
+          root.dataset.started = 'true';
+          delete root.dataset.resume;
+          play();
+        }
+      },
+      { threshold: 0.35 },
+    );
+    io.observe(root);
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && state.playing) {
+        showAll();
+        root.dataset.resume = 'true';
+      } else if (!document.hidden && state.playing && state.visible && root.dataset.resume === 'true') {
+        delete root.dataset.resume;
+        play();
+      }
+    });
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-agent-run]').forEach(setup);
+</script>
+
+<style>
+  .agent-run {
+    margin: 0;
+    /* Terminal colours come from tokens.css (--term-*), dark in both themes. */
+    --run-bg: var(--term-bg);
+    --run-bg-2: var(--term-bg-2);
+    --run-border: var(--term-border);
+    --run-text: var(--term-text);
+    --run-dim: var(--term-muted);
+    --run-gate: var(--term-gate);
+    --run-signal: var(--term-tag-bg);
+    --run-accent: var(--term-accent);
+  }
+  .window {
+    overflow: hidden;
+    border: 1px solid var(--run-border);
+    border-radius: var(--r-md);
+    background: var(--run-bg);
+    color: var(--run-text);
+    box-shadow: var(--term-shadow);
+    font-family: var(--font-mono);
+    font-size: clamp(0.78rem, 0.74rem + 0.18vw, 0.875rem);
+    line-height: 1.6;
+  }
+  .chrome {
+    display: flex;
+    align-items: center;
+    gap: var(--s-3);
+    min-height: 40px;
+    padding: 0 var(--s-2) 0 var(--s-4);
+    background: var(--run-bg-2);
+    border-bottom: 1px solid var(--run-border);
+    color: var(--run-dim);
+    font-size: var(--fs-label);
+  }
+  .dots {
+    display: inline-flex;
+    gap: 6px;
+  }
+  .dots i {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--term-border);
+  }
+  .title {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .ctl {
+    display: inline-grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--run-border);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--run-text);
+    cursor: pointer;
+  }
+  .ctl:hover {
+    border-color: var(--run-accent);
+  }
+  .ctl:focus-visible {
+    outline-color: var(--run-accent);
+  }
+  .ctl svg {
+    fill: currentColor;
+  }
+  .ctl .i-play,
+  .ctl[data-state='paused'] .i-pause {
+    display: none;
+  }
+  .ctl[data-state='paused'] .i-play {
+    display: block;
+  }
+  .lines {
+    list-style: none;
+    margin: 0;
+    padding: var(--s-4) var(--s-5) var(--s-5);
+    min-height: 19.5em;
+  }
+  .line {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+  .line + .line {
+    margin-top: 0.3em;
+  }
+  .prompt {
+    color: var(--run-text);
+    font-weight: 500;
+  }
+  .caret {
+    color: var(--run-accent);
+  }
+  .step,
+  .result {
+    color: var(--run-dim);
+  }
+  .result {
+    color: var(--run-text);
+  }
+  .indent {
+    padding-left: 1.5em;
+    color: var(--run-dim);
+    white-space: pre-wrap;
+  }
+  .tag {
+    color: var(--run-dim);
+  }
+  .tool .tag {
+    display: inline-block;
+    padding: 0 0.45em;
+    border: 1px solid var(--run-border);
+    border-radius: 4px;
+    color: var(--run-accent);
+  }
+  .conclusion {
+    margin-top: 0.7em !important;
+  }
+  .conclusion mark {
+    background: var(--run-signal);
+    color: var(--term-tag);
+    padding: 0 0.25em;
+    border-radius: 2px;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+  }
+  .gate {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--s-3);
+    margin-top: 0.9em !important;
+    padding-top: 0.9em;
+    border-top: 1px dashed var(--run-border);
+    color: var(--run-gate);
+  }
+  .gate-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6em;
+  }
+  .square {
+    width: 0.7em;
+    height: 0.7em;
+    background: var(--run-gate);
+    flex: none;
+  }
+  .actions {
+    display: inline-flex;
+    gap: var(--s-2);
+  }
+  .chip {
+    padding: 0.15em 0.75em;
+    border: 1px solid var(--run-border);
+    border-radius: 999px;
+    color: var(--run-text);
+  }
+  .chip.primary {
+    border-color: var(--run-gate);
+    color: var(--run-gate);
+  }
+  .note {
+    margin-top: var(--s-3);
+    font-family: var(--font-mono);
+    font-size: var(--fs-label);
+    letter-spacing: 0.04em;
+    color: var(--muted);
+  }
+
+  /* Animation (only when JS has started it). Text stays in the DOM the whole time. */
+  .animating .line {
+    opacity: 0;
+    transform: translateY(4px);
+    transition:
+      opacity 250ms var(--ease),
+      transform 250ms var(--ease);
+  }
+  .animating .line.shown {
+    opacity: 1;
+    transform: none;
+  }
+  .animating .prompt .type {
+    display: inline-block;
+    clip-path: inset(0 100% 0 0);
+  }
+  .animating .prompt.shown .type {
+    animation: type calc(min(var(--chars) * 28ms, 1400ms)) steps(var(--chars), end) forwards;
+  }
+  .animating .prompt.shown {
+    transition: none;
+  }
+  .animating .gate.shown .square {
+    animation: pulse 1.6s var(--ease) 2;
+  }
+  @keyframes type {
+    to {
+      clip-path: inset(0 0 0 0);
+    }
+  }
+  @keyframes pulse {
+    50% {
+      opacity: 0.35;
+    }
+  }
+</style>

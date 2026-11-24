@@ -1,0 +1,246 @@
+---
+/**
+ * D4: the checked-output pipeline (gather → author → render → validate), built in HTML/CSS like D1 so it reflows:
+ * a row on wide screens, a column on phones. Scripts and the model are told apart by a label and, for the model
+ * step, the accent border. The artefact each step hands on sits on the arrow after it. Validate has two exits.
+ * The visual is aria-hidden; the sr-only paragraph and the numbered list after it on the page are its text.
+ */
+const steps = [
+  { name: 'Gather', who: 'script', line: 'commits, changed lines, review threads, builds', out: 'facts.json' },
+  { name: 'Author', who: 'model', line: 'findings as data, each with a citation', out: 'findings.json' },
+  { name: 'Render', who: 'script', line: 'the report, in a fixed format' },
+  { name: 'Validate', who: 'script', line: 'every citation checked against the facts' },
+];
+---
+
+<figure class="pipe" data-wide>
+  <p class="sr-only">
+    The checked-output pipeline, in four steps. 1, Gather: a script collects the facts as facts.json. 2, Author: the
+    model writes its findings as findings.json, each with a citation. 3, Render: a script turns the findings into the
+    report. 4, Validate: a script checks every citation against the gathered facts. Gather, Render and Validate are
+    scripts; only Author is the model. If every citation is in the facts, the report is written. If not, the run fails
+    and says which citation was not in the facts.
+  </p>
+  <div class="flow" aria-hidden="true">
+    {
+      steps.map((s, i) => (
+        <>
+          <div class:list={['step', s.who]}>
+            <span class="who">
+              {String(i + 1).padStart(2, '0')} · {s.who}
+            </span>
+            <span class="name">{s.name}</span>
+            <span class="line">{s.line}</span>
+          </div>
+          {i < steps.length - 1 && (
+            <div class="link">
+              <span class="arrow" />
+              {s.out && <span class="file">{s.out}</span>}
+            </div>
+          )}
+        </>
+      ))
+    }
+    <div class="exits">
+      <div class="exit ok">
+        <span class="arrow" />
+        <span class="tag">report</span>
+      </div>
+      <div class="exit fail">
+        <span class="arrow" />
+        <span class="tag"><span class="x">✕</span> run fails: citation not in the facts</span>
+      </div>
+    </div>
+  </div>
+</figure>
+
+<style>
+  .pipe {
+    margin: var(--s-7) 0;
+    position: relative;
+    z-index: 1;
+  }
+  .flow {
+    display: grid;
+    justify-items: stretch;
+  }
+  .step {
+    align-content: start;
+    display: grid;
+    gap: 2px;
+    padding: var(--s-4);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    background: var(--surface);
+    line-height: 1.4;
+  }
+  .step.model {
+    border-color: var(--accent);
+    box-shadow: inset 4px 0 0 var(--accent);
+    background: var(--surface);
+  }
+  .who {
+    font-family: var(--font-mono);
+    font-size: var(--fs-label);
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .model .who {
+    color: var(--accent);
+  }
+  .name {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .line {
+    font-size: var(--fs-small);
+    color: var(--muted);
+  }
+
+  /* Links between steps: a down arrow on phones (file name beside it), a right arrow on wide screens (name above). */
+  .link,
+  .exit {
+    display: flex;
+    align-items: center;
+    gap: var(--s-3);
+    min-height: 44px;
+    padding-left: var(--s-5);
+  }
+  .arrow {
+    flex: none;
+    position: relative;
+    width: 2px;
+    height: 32px;
+    background: var(--border);
+  }
+  .arrow::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: -1px;
+    width: 8px;
+    height: 8px;
+    border-right: 2px solid var(--border);
+    border-bottom: 2px solid var(--border);
+    transform: translateX(-50%) rotate(45deg);
+  }
+  .file {
+    padding: 1px 8px;
+    border-radius: var(--r-sm);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--text);
+  }
+
+  /* Narrow: Validate forks. One trunk drops from the box, and a branch leads to each exit, so they read as
+     alternatives, not as a sequence. */
+  .exits {
+    display: grid;
+    gap: var(--s-3);
+    margin-left: var(--s-5);
+    padding-top: var(--s-4);
+  }
+  .exit {
+    position: relative;
+    flex-direction: row;
+    align-items: center;
+    gap: 0;
+    min-height: 0;
+    padding: 0;
+  }
+  .exit::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: calc(-1 * var(--s-3));
+    bottom: calc(-1 * var(--s-3));
+    width: 2px;
+    background: var(--border);
+  }
+  .exit.ok::before {
+    top: calc(-1 * var(--s-4));
+  }
+  .exit:last-child::before {
+    bottom: 50%;
+  }
+  .exit .arrow {
+    width: 28px;
+    height: 2px;
+    margin-right: var(--s-2);
+  }
+  .exit .arrow::after {
+    left: auto;
+    right: -1px;
+    bottom: 50%;
+    transform: translateY(50%) rotate(-45deg);
+  }
+  .tag {
+    display: inline-flex;
+    gap: var(--s-2);
+    align-items: center;
+    padding: var(--s-2) var(--s-3);
+    border-radius: var(--r-md);
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    line-height: 1.35;
+  }
+  .ok .tag {
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    background: var(--surface);
+  }
+  .fail .tag {
+    border: 1px dashed var(--muted);
+    color: var(--text);
+    background: var(--surface);
+  }
+  .x {
+    color: var(--muted);
+  }
+  /* Wide: one row, steps of equal width, arrows between them, the two exits stacked on the right. */
+  @media (min-width: 1200px) {
+    .pipe {
+      width: min(var(--w-content), calc(100vw - 2 * var(--gutter)));
+      margin-inline: calc((min(var(--w-content), calc(100vw - 2 * var(--gutter))) - 100%) / -2);
+    }
+    .flow {
+      grid-template-columns: 1fr 7.5rem 1fr 7.5rem 1fr 3rem 1fr 13rem;
+      align-items: center;
+    }
+    .step {
+      align-self: stretch;
+    }
+    .link {
+      flex-direction: column-reverse;
+      justify-content: center;
+      gap: var(--s-2);
+      padding: 0;
+    }
+    .arrow {
+      width: calc(100% - 16px);
+      height: 2px;
+    }
+    .arrow::after {
+      left: auto;
+      right: -1px;
+      bottom: 50%;
+      transform: translateY(50%) rotate(-45deg);
+    }
+    .exits {
+      margin-left: 0;
+      padding-top: 0;
+    }
+    .exit {
+      padding-left: var(--s-2);
+    }
+    .exit::before {
+      display: none;
+    }
+  }
+</style>

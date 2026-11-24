@@ -1,0 +1,132 @@
+---
+/** Phone menu: a full-width sheet built on the Popover API (works without JS, Esc and light-dismiss built in). */
+import { NAV, SITE } from '../site';
+import ThemeToggle from './ThemeToggle.astro';
+
+interface Props {
+  path: string;
+}
+const { path } = Astro.props;
+---
+
+<button class="menu-btn" type="button" popovertarget="mobile-menu" aria-controls="mobile-menu">Menu</button>
+
+<div id="mobile-menu" popover class="sheet" aria-label="Menu">
+  <div class="sheet-top">
+    <span class="label">Menu</span>
+    <button class="close" type="button" popovertarget="mobile-menu" popovertargetaction="hide">Close</button>
+  </div>
+  <nav aria-label="Main">
+    <ul>
+      <li><a href="/" aria-current={path === '/' ? 'page' : undefined}>Home</a></li>
+      {
+        NAV.map((item) => (
+          <li>
+            <a href={item.href} aria-current={path.startsWith(item.match) ? 'page' : undefined}>
+              {item.label}
+            </a>
+          </li>
+        ))
+      }
+      <li><a href="/resume/" aria-current={path.startsWith('/resume/') ? 'page' : undefined}>Résumé</a></li>
+    </ul>
+  </nav>
+  <div class="sheet-foot">
+    <a href={SITE.linkedin}>LinkedIn</a>
+    <a href={SITE.github}>GitHub</a>
+    <ThemeToggle />
+  </div>
+</div>
+
+<style>
+  .menu-btn,
+  .close {
+    min-height: 36px;
+    padding: 0 0.95em;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+    font: 600 0.9375rem/1 var(--font-text);
+    cursor: pointer;
+  }
+  .sheet {
+    inset: 0 0 auto 0;
+    width: 100%;
+    max-width: none;
+    max-height: 100dvh;
+    margin: 0;
+    padding: var(--s-3) var(--gutter) var(--s-6);
+    border: 0;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+  }
+  .sheet::backdrop {
+    background: rgb(18 20 23 / 0.45);
+  }
+  .sheet-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: calc(var(--header-h) - var(--s-3));
+  }
+  nav ul {
+    list-style: none;
+    margin: var(--s-4) 0 var(--s-5);
+    padding: 0;
+  }
+  nav li {
+    margin: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  nav a {
+    display: block;
+    padding: var(--s-3) 0;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 2rem;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    text-decoration: none;
+  }
+  nav a[aria-current='page'] {
+    text-decoration: underline;
+    text-decoration-color: var(--accent);
+    text-decoration-thickness: 4px;
+    text-underline-offset: 0.18em;
+  }
+  .sheet-foot {
+    display: flex;
+    align-items: center;
+    gap: var(--s-5);
+  }
+  .sheet-foot a {
+    color: var(--text);
+    font-weight: 500;
+  }
+  .sheet-foot :global(.theme-toggle) {
+    margin-left: auto;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .sheet {
+      transition:
+        opacity var(--t-ui) var(--ease),
+        transform var(--t-ui) var(--ease),
+        overlay var(--t-ui) allow-discrete,
+        display var(--t-ui) allow-discrete;
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+    .sheet:popover-open {
+      opacity: 1;
+      transform: none;
+    }
+    @starting-style {
+      .sheet:popover-open {
+        opacity: 0;
+        transform: translateY(-8px);
+      }
+    }
+  }
+</style>

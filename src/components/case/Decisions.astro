@@ -1,0 +1,133 @@
+---
+/**
+ * <Decisions>: a design-decision table (Decision, Why, Trade-off). A real table on wide screens; on phones each row
+ * becomes a card, and the column names appear beside the cells so the stacked text still says what it is.
+ */
+interface Props {
+  rows: { decision: string; why: string; tradeoff: string }[];
+  caption: string;
+}
+const { rows, caption } = Astro.props;
+const cols = [
+  { k: 'decision', label: 'Decision' },
+  { k: 'why', label: 'Why' },
+  { k: 'tradeoff', label: 'Trade-off' },
+] as const;
+---
+
+<div class="dec">
+  <table>
+    <caption class="sr-only">{caption}</caption>
+    <thead>
+      <tr>{cols.map((c) => <th scope="col">{c.label}</th>)}</tr>
+    </thead>
+    <tbody>
+      {
+        rows.map((r) => (
+          <tr>
+            {cols.map((c, i) =>
+              i === 0 ? (
+                <th scope="row" data-label={c.label}>
+                  {r[c.k]}
+                </th>
+              ) : (
+                <td data-label={c.label}>{r[c.k]}</td>
+              ),
+            )}
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+</div>
+
+<style>
+  .dec {
+    margin: var(--s-6) 0;
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    background: var(--surface);
+    overflow: hidden;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9375rem;
+    line-height: 1.45;
+  }
+  th,
+  td {
+    padding: var(--s-3) var(--s-4);
+    text-align: left;
+    vertical-align: top;
+  }
+  thead th {
+    font-family: var(--font-mono);
+    font-size: var(--fs-label);
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    border-bottom: 1px solid var(--border);
+  }
+  tbody th {
+    width: 32%;
+    font-weight: 600;
+  }
+  td {
+    width: 34%;
+  }
+  td:last-child {
+    color: var(--muted);
+  }
+  tbody tr + tr > * {
+    border-top: 1px solid var(--border);
+  }
+  @media (max-width: 719px) {
+    thead {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+    table,
+    tbody,
+    tr,
+    th,
+    td {
+      display: block;
+      width: auto;
+    }
+    tbody th {
+      width: auto;
+      padding-bottom: var(--s-2);
+    }
+    td {
+      padding-block: 0 var(--s-2);
+    }
+    td:last-child {
+      padding-bottom: var(--s-4);
+    }
+    tbody tr + tr > * {
+      border-top: 0;
+    }
+    tbody tr + tr {
+      border-top: 1px solid var(--border);
+    }
+    td::before {
+      content: attr(data-label);
+      display: block;
+      font-family: var(--font-mono);
+      font-size: var(--fs-label);
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    tbody th {
+      padding-top: var(--s-4);
+    }
+  }
+</style>

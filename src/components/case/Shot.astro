@@ -1,0 +1,185 @@
+---
+/**
+ * <Shot>: one screenshot with a caption, served through Astro's image pipeline (AVIF/WebP, responsive widths,
+ * lazy unless `eager`). It links to a WebP of up to 1920 px, so it can be enlarged: <Zoom> opens that in a dialog,
+ * and without JS the link opens the image itself.
+ *
+ * `dark` is an optional dark-theme variant of the same screenshot (same size): each theme shows its own, the hidden
+ * one is never downloaded, and the enlarged view follows the theme too. A wide figure is never drawn larger than
+ * the image's own width, so small UI screenshots stay sharp.
+ */
+import { Picture, getImage } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
+interface Props {
+  image: ImageMetadata;
+  /** Dark-theme variant, shown instead of `image` in dark mode. */
+  dark?: ImageMetadata;
+  alt: string;
+  caption: string;
+  /** Break out of the text column to the wide measure. */
+  wide?: boolean;
+  /** Above the fold: load now, at high priority. Ignored when there is a `dark` variant (only the visible one loads). */
+  eager?: boolean;
+  /** `sizes` for the responsive image; the default suits a wide figure. */
+  sizes?: string;
+  /**
+   * Frame shape, as a CSS aspect-ratio; the image fills it (cropped to the centre). `auto` uses the image's own
+   * shape, for UI screenshots that must not be cropped. The enlarged view is never cropped.
+   */
+  aspect?: string;
+  /** Encoding quality. The default suits photos and game frames; UI screenshots with small text want more. */
+  quality?: number;
+  /** Cap the figure's width (CSS length), e.g. for a phone screenshot. */
+  maxWidth?: string;
+  class?: string;
+}
+const {
+  image,
+  dark,
+  alt,
+  caption,
+  wide = false,
+  eager: eagerProp = false,
+  sizes = wide ? '(min-width: 1440px) 1408px, calc(100vw - 32px)' : '(min-width: 800px) 720px, calc(100vw - 32px)',
+  aspect: aspectProp = '16 / 9',
+  quality = 72,
+  maxWidth,
+  class: className,
+} = Astro.props;
+
+// With two variants, eager loading would fetch the hidden one too.
+const eager = eagerProp && !dark;
+const aspect = aspectProp === 'auto' ? `${image.width} / ${image.height}` : aspectProp;
+const fullOf = (src: ImageMetadata) =>
+  getImage({ src, format: 'webp', width: Math.min(1920, src.width), quality: Math.max(85, quality) });
+const full = await fullOf(image);
+const fullDark = dark ? await fullOf(dark) : undefined;
+// Standard steps up to the image's width, plus the full width itself so a 2x screen gets every pixel there is.
+const widths = [...new Set([...[480, 800, 1200, 1600, 1920].filter((w) => w < image.width), Math.min(1920, image.width)])];
+const style = [`--shot-aspect: ${aspect}`, `--shot-max: ${image.width}px`, maxWidth && `max-width: ${maxWidth}`]
+  .filter(Boolean)
+  .join('; ');
+const variants = dark
+  ? [
+      { src: image, attrs: { 'data-variant': 'light' } },
+      { src: dark, attrs: { 'data-variant': 'dark' } },
+    ]
+  : [{ src: image, attrs: {} }];
+---
+
+<figure class:list={['shot', { wide }, className]} data-wide={wide ? '' : undefined} style={style}>
+  <a
+    class="zoom"
+    href={full.src}
+    data-zoom
+    data-caption={caption}
+    data-alt={alt}
+    data-w={full.attributes.width}
+    data-h={full.attributes.height}
+    data-dark-href={fullDark?.src}
+  >
+    {
+      variants.map((v) => (
+        <Picture
+          src={v.src}
+          alt={alt}
+          formats={['avif']}
+          fallbackFormat="webp"
+          widths={widths}
+          sizes={sizes}
+          quality={quality}
+          loading={eager ? 'eager' : 'lazy'}
+          fetchpriority={eager ? 'high' : 'auto'}
+          decoding="async"
+          pictureAttributes={v.attrs}
+        />
+      ))
+    }
+    <span class="enlarge" aria-hidden="true">
+      <svg viewBox="0 0 16 16" width="14" height="14"><path d="M9.5 2.5h4v4M13.5 2.5 9 7M6.5 13.5h-4v-4M2.5 13.5 7 9" /></svg>
+    </span>
+    <span class="sr-only">(enlarge)</span>
+  </a>
+  <figcaption>{caption}</figcaption>
+</figure>
+
+<style>
+  .shot {
+    margin: var(--s-7) 0;
+  }
+  .wide {
+    --wide-w: min(var(--w-wide), calc(100vw - 2 * var(--gutter)), max(100%, var(--shot-max, 100vw)));
+    width: var(--wide-w);
+    margin-inline: calc((var(--wide-w) - 100%) / -2);
+  }
+  /* Light/dark variants, by the same rule as tokens.css (dark on screen unless explicitly light; light in print).
+     The inactive one is display: none, so its lazy image is never fetched. */
+  .zoom :global(picture[data-variant='dark']) {
+    display: none;
+  }
+  @media screen {
+    :global(:root:not([data-theme='light'])) .zoom :global(picture[data-variant='dark']) {
+      display: block;
+    }
+    :global(:root:not([data-theme='light'])) .zoom :global(picture[data-variant='light']) {
+      display: none;
+    }
+  }
+  .zoom {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    border-radius: var(--r-md);
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    cursor: zoom-in;
+  }
+  .zoom :global(img) {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: var(--shot-aspect, 16 / 9);
+    object-fit: cover;
+  }
+  .enlarge {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    background: rgb(14 23 32 / 0.72);
+    color: #fff;
+    opacity: 0;
+    transition: opacity var(--t-hover) var(--ease);
+  }
+  .enlarge path {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .zoom:hover .enlarge,
+  .zoom:focus-visible .enlarge {
+    opacity: 1;
+  }
+  .zoom:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+  }
+  figcaption {
+    margin-top: var(--s-3);
+    max-width: var(--w-prose);
+    font-size: var(--fs-small);
+    color: var(--muted);
+  }
+  @media (hover: none) {
+    .enlarge {
+      opacity: 1;
+    }
+  }
+</style>

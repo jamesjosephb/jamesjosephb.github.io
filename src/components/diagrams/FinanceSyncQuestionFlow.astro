@@ -1,0 +1,203 @@
+---
+/**
+ * finance-sync, diagram B: "One question, end to end", as a small sequence diagram across five participants.
+ * Laid out from data at two widths (text column, phone); CSS shows one. The numbered list after it on the page is
+ * its text alternative. Numbers on the arrows match that list.
+ */
+const lanes = [
+  { wide: ['Person'], narrow: ['Person'] },
+  { wide: ['Claude Desktop'], narrow: ['Claude', 'Desktop'] },
+  { wide: ['Anthropic'], narrow: ['Anthropic'] },
+  { wide: ['Connector'], narrow: ['Connector'] },
+  { wide: ['Web app API'], narrow: ['Web app', 'API'] },
+];
+// from, to, label (wide / narrow lines), step number shown on the arrow, highlighted
+const msgs: { f: number; t: number; wide: string[]; narrow: string[]; n?: number; key?: boolean }[] = [
+  { f: 0, t: 1, wide: ['question'], narrow: ['question'], n: 1 },
+  { f: 1, t: 2, wide: ['question'], narrow: ['question'] },
+  { f: 2, t: 1, wide: ['tool call'], narrow: ['tool call'], n: 2 },
+  { f: 1, t: 3, wide: ['tool call'], narrow: ['tool call'], n: 3 },
+  { f: 3, t: 4, wide: ['read-only key'], narrow: ['read-only', 'key'], n: 4, key: true },
+  { f: 4, t: 3, wide: ['≤ 50 rows', '+ totals'], narrow: ['≤ 50 rows', '+ totals'], n: 5 },
+  { f: 3, t: 1, wide: ['tool result'], narrow: ['tool result'] },
+  { f: 1, t: 2, wide: ['tool result'], narrow: ['tool result'], n: 6 },
+  { f: 2, t: 1, wide: ['answer'], narrow: ['answer'] },
+  { f: 1, t: 0, wide: ['answer'], narrow: ['answer'] },
+];
+
+// keyLift: extra clearance above the thicker highlighted arrow, whose arrowhead is larger (desktop only; the phone
+// layout has no room to spare between rows).
+type Cfg = { id: string; w: number; x0: number; gap: number; head: number; hw: number; size: number; lab: number; row: number; lh: number; keyLift: number };
+const cfgs: { cls: string; c: Cfg; key: 'wide' | 'narrow' }[] = [
+  { cls: 'is-wide', key: 'wide', c: { id: 'fsb-w', w: 720, x0: 72, gap: 144, head: 44, hw: 128, size: 14, lab: 12.5, row: 44, lh: 14, keyLift: 6 } },
+  { cls: 'is-narrow', key: 'narrow', c: { id: 'fsb-n', w: 400, x0: 42, gap: 79, head: 50, hw: 74, size: 12.5, lab: 12.5, row: 42, lh: 14, keyLift: 0 } },
+];
+
+const build = ({ c, key }: (typeof cfgs)[number]) => {
+  const xs = lanes.map((_, i) => c.x0 + i * c.gap);
+  let y = c.head + 34;
+  const rows = msgs.map((m) => {
+    const lines = m[key];
+    const extra = (lines.length - 1) * c.lh;
+    y += extra;
+    const r = { ...m, lines, y, x1: xs[m.f], x2: xs[m.t], ly: y - 8 - extra - (m.key ? c.keyLift : 0) };
+    y += c.row;
+    return r;
+  });
+  return { xs, rows, h: y - c.row + 28 };
+};
+---
+
+<figure class="fsb">
+  {
+    cfgs.map((cfg) => {
+      const { c } = cfg;
+      const { xs, rows, h } = build(cfg);
+      return (
+        <svg
+          class:list={['dg', cfg.cls]}
+          viewBox={`0 0 ${c.w} ${h}`}
+          role="img"
+          aria-label="Sequence diagram of one question, end to end: the person asks Claude Desktop; Claude, at Anthropic, picks a tool; Claude Desktop passes the call to the connector; the connector calls the web app's API with a read-only key; the API returns at most 50 rows plus totals; the result goes back through Claude Desktop to Anthropic, and Claude answers. The numbered list below describes each step."
+          style={`--size:${c.size}px; --lab:${c.lab}px`}
+        >
+          <defs>
+            <marker id={`${c.id}-a`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path class="ah" d="M0 0 L10 5 L0 10 z" />
+            </marker>
+            <marker id={`${c.id}-k`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path class="ah key" d="M0 0 L10 5 L0 10 z" />
+            </marker>
+          </defs>
+          {lanes.map((l, i) => {
+            const lines = l[cfg.key];
+            const x = xs[i];
+            const first = 8 + c.head / 2 - ((lines.length - 1) * (c.size + 2)) / 2 + c.size * 0.35;
+            return (
+              <g>
+                <line class="life" x1={x} y1={8 + c.head} x2={x} y2={h - 8} />
+                <rect class="head" x={x - c.hw / 2} y="8" width={c.hw} height={c.head} rx="8" />
+                {lines.map((t, j) => (
+                  <text class="htext" x={x} y={first + j * (c.size + 2)} text-anchor="middle">
+                    {t}
+                  </text>
+                ))}
+              </g>
+            );
+          })}
+          {rows.map((r) => {
+            const dir = Math.sign(r.x2 - r.x1);
+            const mid = (r.x1 + r.x2) / 2;
+            return (
+              <g class:list={{ key: r.key }}>
+                <line
+                  class="msg"
+                  x1={r.x1 + dir * (r.n ? 11 : 0)}
+                  y1={r.y}
+                  x2={r.x2 - dir * 3}
+                  y2={r.y}
+                  marker-end={`url(#${c.id}-${r.key ? 'k' : 'a'})`}
+                />
+                {r.n && (
+                  <g>
+                    <circle class="dot" cx={r.x1} cy={r.y} r="10" />
+                    <text class="num" x={r.x1} y={r.y + 4} text-anchor="middle">
+                      {r.n}
+                    </text>
+                  </g>
+                )}
+                <text class="mlabel" text-anchor="middle">
+                  {r.lines.map((t, j) => (
+                    <tspan x={mid + dir * (r.n ? 5 : 0)} y={r.ly + j * c.lh}>
+                      {t}
+                    </tspan>
+                  ))}
+                </text>
+              </g>
+            );
+          })}
+        </svg>
+      );
+    })
+  }
+</figure>
+
+<style>
+  .fsb {
+    margin: var(--s-6) 0;
+  }
+  .dg {
+    display: block;
+    width: 100%;
+    height: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    background: var(--surface);
+  }
+  .is-wide {
+    display: none;
+  }
+  @media (min-width: 640px) {
+    .is-wide {
+      display: block;
+    }
+    .is-narrow {
+      display: none;
+    }
+  }
+  .life {
+    stroke: var(--border);
+    stroke-width: 1.5;
+    stroke-dasharray: 4 4;
+  }
+  .head {
+    fill: var(--surface-2);
+    stroke: var(--border);
+    stroke-width: 1.5;
+  }
+  .htext {
+    font-family: var(--font-text);
+    font-size: var(--size);
+    font-weight: 600;
+    fill: var(--text);
+  }
+  .msg {
+    stroke: var(--muted);
+    stroke-width: 1.5;
+  }
+  .key .msg {
+    stroke: var(--accent);
+    stroke-width: 2.5;
+  }
+  .ah {
+    fill: var(--muted);
+  }
+  .ah.key {
+    fill: var(--accent);
+  }
+  .dot {
+    fill: var(--accent-fill);
+  }
+  .num {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    fill: var(--on-accent);
+  }
+  .mlabel {
+    font-family: var(--font-mono);
+    font-size: var(--lab);
+    fill: var(--muted);
+    paint-order: stroke;
+    stroke: var(--surface);
+    stroke-width: 5px;
+    stroke-linejoin: round;
+  }
+  .key .mlabel {
+    fill: var(--accent);
+  }
+  /* Phones: the narrower sans face lets the labels be larger in the 79-unit gaps between lanes. */
+  .is-narrow .mlabel {
+    font-family: var(--font-text);
+  }
+</style>

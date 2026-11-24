@@ -1,0 +1,102 @@
+---
+import { SITE } from '../site';
+import Monogram from './Monogram.astro';
+
+const { user, domain } = SITE.email;
+const [domainName, tld] = domain.split('.');
+---
+
+<footer class="site-footer">
+  <div class="container foot">
+    <div class="intro">
+      <Monogram />
+      <p>James Burch · Tech lead, AI agent engineering · Denver, Colorado</p>
+    </div>
+    <ul class="links">
+      <li><a href={SITE.linkedin} rel="me">LinkedIn</a></li>
+      <li><a href={SITE.github} rel="me">GitHub</a></li>
+      <li>
+        <a class="email" data-u={user} data-d={domain}
+          ><span class="email-text">{user} [at] {domainName} [dot] {tld}</span></a
+        >
+      </li>
+      <li><a href={SITE.resumePdf}>Résumé (PDF)</a></li>
+    </ul>
+    <p class="meta">
+      © {new Date().getFullYear()} James Burch · Built with Astro · <a href={SITE.source}>source on GitHub</a>
+    </p>
+  </div>
+</footer>
+
+<script>
+  document.querySelectorAll<HTMLAnchorElement>('a.email[data-u]').forEach((a) => {
+    const addr = `${a.dataset.u}@${a.dataset.d}`;
+    a.href = `mailto:${addr}`;
+    const text = a.querySelector('.email-text');
+    if (text) text.textContent = addr;
+  });
+</script>
+
+<style>
+  .site-footer {
+    margin-top: var(--section-gap);
+    border-top: 1px solid var(--border);
+    font-size: var(--fs-small);
+    color: var(--muted);
+  }
+  .foot {
+    display: grid;
+    gap: var(--s-5);
+    /* Extra room at the bottom so nothing sits under the iOS home indicator or Safari's bottom toolbar. */
+    padding-block: var(--s-7) calc(var(--s-8) + env(safe-area-inset-bottom));
+  }
+  @media (min-width: 720px) {
+    .foot {
+      padding-bottom: calc(var(--s-6) + env(safe-area-inset-bottom));
+    }
+  }
+  .intro {
+    display: flex;
+    align-items: center;
+    gap: var(--s-4);
+  }
+  .intro p {
+    margin: 0;
+    max-width: 48ch;
+    font-size: 1rem;
+    color: var(--text);
+  }
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-2) var(--s-5);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .links li {
+    margin: 0;
+  }
+  .links a {
+    color: var(--text);
+    font-weight: 500;
+  }
+  .meta {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--fs-label);
+    letter-spacing: 0.04em;
+  }
+  .meta a {
+    color: inherit;
+  }
+  @media (min-width: 900px) {
+    .foot {
+      grid-template-columns: 1fr auto;
+      align-items: center;
+    }
+    .meta {
+      grid-column: 1 / -1;
+    }
+  }
+</style>

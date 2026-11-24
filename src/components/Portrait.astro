@@ -1,0 +1,44 @@
+---
+/**
+ * James's portrait as a circle. The source (src/assets/portrait.png, 416×416) is low-res and has bits of an old
+ * banner in its corners, so it is shown at most ~200 px and zoomed slightly inside the circle to hide the edge.
+ */
+import { Image } from 'astro:assets';
+import portrait from '../assets/portrait.png';
+
+interface Props {
+  /** Display size in CSS px (keep ≤ 200; the source is 416 px). */
+  size?: number;
+  /** Empty when the name is already next to it. */
+  alt?: string;
+  loading?: 'eager' | 'lazy';
+  class?: string;
+}
+const { size = 200, alt = 'James Burch', loading = 'lazy', class: className } = Astro.props;
+---
+
+<span class:list={['portrait', className]} style={`--size:${size}px`}>
+  <Image src={portrait} alt={alt} width={size} height={size} densities={[1, 2]} format="webp" quality={85} loading={loading} />
+</span>
+
+<style>
+  .portrait {
+    display: inline-block;
+    flex: none;
+    width: var(--size);
+    height: var(--size);
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--surface-2);
+    box-shadow:
+      0 0 0 4px var(--bg),
+      0 0 0 6px var(--accent);
+  }
+  .portrait :global(img) {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scale(1.06);
+  }
+</style>

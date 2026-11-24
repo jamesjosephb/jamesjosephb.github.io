@@ -1,0 +1,441 @@
+---
+/**
+ * M1: a live HTML mock of the triage agent's final report (timeline + likely root cause + evidence + approval bar).
+ * All data is synthetic, from the fictional demo app "Fourteener Transfers". The approval buttons are illustrative,
+ * so they're plain text, not controls.
+ */
+import Frame from '../Frame.astro';
+
+const id = '7f3c9a2e-5b1d-4c8a-9e55-2a6f0c1d7b34';
+const events = [
+  {
+    utc: '22:42:07.112',
+    local: '15:42:07',
+    service: 'transfers-api',
+    level: 'info',
+    event: 'TransferRequested',
+    detail: 'same-day transfer, acct_1007 → acct_1022',
+  },
+  {
+    utc: '22:42:07.118',
+    local: '15:42:07',
+    service: 'transfers-api',
+    level: 'info',
+    event: 'CutoffEvaluated',
+    detail: 'afterCutoff = true · effective 2026-11-19',
+    flag: true,
+  },
+  {
+    utc: '22:42:07.164',
+    local: '15:42:07',
+    service: 'ledger-api',
+    level: 'warn',
+    event: 'EntryRejected',
+    detail: 'EFFECTIVE_DATE_MISMATCH: same-day entry dated 2026-11-19',
+  },
+  {
+    utc: '22:42:07.171',
+    local: '15:42:07',
+    service: 'transfers-api',
+    level: 'error',
+    event: 'LedgerRejectedTransfer',
+    detail: 'ledger returned 409; client got 502',
+  },
+];
+const evidence = [
+  { kind: 'logs', text: `trace_correlation_id ${id.slice(0, 8)}…`, note: '4 events, 2 services' },
+  { kind: 'code', text: 'src/Transfers.Api/Scheduling/CutoffPolicy.cs', note: 'Evaluate() reads requestedAt.UtcDateTime' },
+  { kind: 'change', text: 'Refactor cut-off evaluation to use DateTimeOffset', note: 'v1.4.0, deployed 2026-11-17' },
+  { kind: 'pattern', text: 'Same error on other same-day requests since v1.4.0', note: 'none before it' },
+];
+---
+
+<figure class="report-fig" data-wide>
+  <Frame kind="editor" title="correlation-triage · report">
+    <div class="report">
+      <header class="r-head">
+        <div>
+          <p class="r-label">Triage report</p>
+          <p class="r-id"><span class="muted">correlation id</span> <code>{id}</code></p>
+        </div>
+        <ul class="r-meta" role="list">
+          <li><span class="muted">window</span> 2026-11-18 22:42 UTC</li>
+          <li><span class="muted">services</span> transfers-api, ledger-api</li>
+        </ul>
+      </header>
+
+      <section class="r-sec" aria-label="Timeline">
+        <p class="r-label">Timeline</p>
+        <div class="tl-scroll">
+          <table class="tl">
+            <thead>
+              <tr>
+                <th scope="col">UTC</th>
+                <th scope="col">Denver</th>
+                <th scope="col">Service</th>
+                <th scope="col">Level</th>
+                <th scope="col">Event</th>
+              </tr>
+            </thead>
+            <tbody>
+              {
+                events.map((e) => (
+                  <tr class:list={[e.level, { flag: e.flag }]}>
+                    <td class="t">{e.utc}</td>
+                    <td class="t">{e.local}</td>
+                    <td>{e.service}</td>
+                    <td>
+                      <span class:list={['lvl', e.level]}>{e.level}</span>
+                    </td>
+                    <td>
+                      <span class="ev">{e.event}</span>
+                      <span class="det">{e.detail}</span>
+                    </td>
+                  </tr>
+                ))
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <div class="r-grid">
+        <section class="r-sec cause" aria-label="Likely root cause">
+          <p class="r-label">Likely root cause <span class="conf">confidence: high</span></p>
+          <p class="cause-text">
+            <mark>The cut-off check compares the request time in UTC, not in business time (America/Denver).</mark>
+          </p>
+          <p class="small">
+            Same-day requests from 9:00 Denver time on are marked “after cut-off” and dated the next business day. The
+            ledger still sees a same-day request and rejects it.
+          </p>
+          <p class="r-label sub">Not checked</p>
+          <p class="small">Weekend requests; how clients retry a 502.</p>
+        </section>
+
+        <section class="r-sec" aria-label="Evidence">
+          <p class="r-label">Evidence</p>
+          <ul class="evidence" role="list">
+            {
+              evidence.map((e) => (
+                <li>
+                  <span class="kind">{e.kind}</span>
+                  <span class="ev-text">{e.text}</span>
+                  <span class="small muted">{e.note}</span>
+                </li>
+              ))
+            }
+          </ul>
+        </section>
+      </div>
+
+      <footer class="gate">
+        <p class="gate-text">
+          <span class="sq" aria-hidden="true"></span>
+          Suggested next step: convert to business time before comparing, and add a test at 15:42 Denver. Hand off to the
+          delivery agent?
+        </p>
+        <p class="chips">
+          <span class="sr-only">Choices offered to the engineer: approve hand-off, edit, or stop.</span>
+          <span class="chip primary" aria-hidden="true">Approve hand-off</span>
+          <span class="chip" aria-hidden="true">Edit</span>
+          <span class="chip" aria-hidden="true">Stop</span>
+        </p>
+      </footer>
+    </div>
+  </Frame>
+  <figcaption>
+    Illustrative, from the demo app (synthetic data). Every claim points at something a person can check: a log query, a
+    file, a commit. Then the agent stops and waits.
+  </figcaption>
+</figure>
+
+<style>
+  .report-fig {
+    margin: var(--s-7) 0;
+    position: relative;
+    z-index: 1;
+  }
+  @media (min-width: 960px) {
+    .report-fig {
+      width: min(var(--w-content), calc(100vw - 2 * var(--gutter)));
+      margin-inline: calc((min(var(--w-content), calc(100vw - 2 * var(--gutter))) - 100%) / -2);
+    }
+  }
+  figcaption {
+    margin-top: var(--s-3);
+    max-width: var(--w-prose);
+    font-size: var(--fs-small);
+    color: var(--muted);
+  }
+  .report {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s-5);
+    padding: var(--s-5);
+    font-size: 0.9375rem;
+    line-height: 1.5;
+  }
+  .report p {
+    margin: 0;
+  }
+  .muted {
+    color: var(--muted);
+  }
+  .small {
+    font-size: var(--fs-small);
+  }
+  .r-label {
+    margin-bottom: var(--s-2) !important;
+    font-family: var(--font-mono);
+    font-size: var(--fs-label);
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .r-label.sub {
+    margin-top: var(--s-5);
+  }
+  .r-head {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: var(--s-3) var(--s-6);
+    padding-bottom: var(--s-4);
+    border-bottom: 1px solid var(--border);
+  }
+  .r-id code {
+    background: none;
+    padding: 0;
+    overflow-wrap: anywhere;
+  }
+  .r-meta {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+  }
+  .r-meta li {
+    margin: 0;
+  }
+  .tl-scroll {
+    overflow-x: auto;
+  }
+  .tl {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+  }
+  .tl th {
+    padding: var(--s-1) var(--s-3) var(--s-2) 0;
+    text-align: left;
+    font-weight: 500;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  .tl td {
+    padding: var(--s-2) var(--s-3) var(--s-2) 0;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .tl .t {
+    white-space: nowrap;
+  }
+  .tl tr.flag td {
+    background: color-mix(in srgb, var(--signal) 22%, transparent);
+  }
+  /* Muted grey is too faint on the lime tint in dark mode, so the flagged row uses full text colour. */
+  .tl tr.flag td,
+  .tl tr.flag .det,
+  .tl tr.flag td::after {
+    color: var(--text) !important;
+  }
+  .ev {
+    display: block;
+    font-weight: 500;
+  }
+  .det {
+    display: block;
+    color: var(--muted);
+  }
+  .lvl {
+    display: inline-block;
+    padding: 0 6px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+  .lvl.error {
+    border-color: var(--gate);
+    color: var(--gate);
+  }
+  .r-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s-5);
+  }
+  .conf {
+    margin-left: var(--s-2);
+    padding: 0 6px;
+    border-radius: 4px;
+    background: var(--surface-2);
+    color: var(--text);
+    text-transform: none;
+    letter-spacing: 0;
+  }
+  .cause-text {
+    margin-bottom: var(--s-3) !important;
+    font-size: 1.0625rem;
+    font-weight: 600;
+    line-height: 1.45;
+  }
+  .cause-text mark {
+    background: var(--signal);
+    color: var(--on-signal);
+    padding: 0 0.2em;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+  }
+  .evidence {
+    display: grid;
+    gap: var(--s-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .evidence li {
+    display: grid;
+    grid-template-columns: 4.5rem minmax(0, 1fr);
+    gap: 0 var(--s-3);
+    margin: 0;
+  }
+  .evidence .small {
+    grid-column: 2;
+  }
+  .kind {
+    grid-row: span 2;
+    font-family: var(--font-mono);
+    font-size: var(--fs-label);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+    padding-top: 2px;
+  }
+  .ev-text {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    text-decoration: underline;
+    text-decoration-color: var(--border);
+    text-underline-offset: 0.2em;
+    overflow-wrap: anywhere;
+  }
+  .gate {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--s-3) var(--s-5);
+    padding: var(--s-4);
+    border: 1.5px solid var(--gate);
+    border-radius: var(--r-md);
+    background: color-mix(in srgb, var(--gate) 6%, var(--surface));
+  }
+  .gate-text {
+    flex: 1 1 24rem;
+    display: flex;
+    gap: var(--s-3);
+    align-items: baseline;
+    color: var(--text);
+  }
+  .sq {
+    flex: none;
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    background: var(--gate);
+    transform: translateY(1px);
+  }
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-2);
+  }
+  .chip {
+    padding: 4px 12px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: var(--fs-small);
+    font-weight: 600;
+    background: var(--surface);
+  }
+  .chip.primary {
+    border-color: var(--gate);
+    color: var(--gate);
+  }
+  /* Phones: each event becomes a two-line row instead of a wide table. */
+  @media (max-width: 639px) {
+    .tl thead {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+    }
+    .tl,
+    .tl tbody {
+      display: block;
+    }
+    .tl tr {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-areas: 'utc level' 'ev ev' 'svc svc';
+      gap: 2px var(--s-3);
+      padding: var(--s-3) var(--s-2);
+      border-bottom: 1px solid var(--border);
+    }
+    .tl tr.flag {
+      background: color-mix(in srgb, var(--signal) 22%, transparent);
+    }
+    .tl td {
+      display: block;
+      padding: 0;
+      border: 0;
+      background: none !important;
+    }
+    .tl td:nth-child(1) {
+      grid-area: utc;
+    }
+    .tl td:nth-child(1)::after {
+      content: ' UTC';
+      color: var(--muted);
+    }
+    .tl td:nth-child(2) {
+      display: none;
+    }
+    .tl .det {
+      overflow-wrap: anywhere;
+    }
+    .tl td:nth-child(3) {
+      grid-area: svc;
+      color: var(--muted);
+    }
+    .tl td:nth-child(4) {
+      grid-area: level;
+    }
+    .tl td:nth-child(5) {
+      grid-area: ev;
+    }
+  }
+  @media (min-width: 760px) {
+    .report {
+      padding: var(--s-6);
+    }
+    .r-grid {
+      grid-template-columns: 1.1fr 1fr;
+      gap: var(--s-7);
+    }
+  }
+</style>

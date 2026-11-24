@@ -1,0 +1,59 @@
+---
+/**
+ * A reserved place for media or copy that doesn't exist yet (Phase 2 recordings and screenshots,
+ * or text James still has to supply). Visible only in `npm run dev`; renders nothing in a build,
+ * so the live page never shows an empty box.
+ */
+interface Props {
+  /** Shot-list ID from the plan, e.g. "R1" or "S3". */
+  id: string;
+  kind?: 'recording' | 'screenshot' | 'copy' | 'card';
+  /** What will go here and what the caption should say. */
+  caption: string;
+  /** Aspect ratio of the reserved box, e.g. "16 / 10". */
+  ratio?: string;
+}
+const { id, kind = 'screenshot', caption, ratio = kind === 'copy' || kind === 'card' ? 'auto' : '16 / 10' } = Astro.props;
+const show = import.meta.env.DEV;
+---
+
+{
+  show && (
+    <div class="slot" style={`--ratio:${ratio}`} data-slot={id}>
+      <p class="tag">
+        {id} · {kind} · Phase 2 slot (dev only)
+      </p>
+      <p class="cap">{caption}</p>
+    </div>
+  )
+}
+
+<style>
+  .slot {
+    display: grid;
+    align-content: center;
+    gap: var(--s-2);
+    aspect-ratio: var(--ratio);
+    min-height: 120px;
+    margin: var(--s-6) 0;
+    padding: var(--s-5);
+    border: 2px dashed var(--border);
+    border-radius: var(--r-md);
+    background: repeating-linear-gradient(-45deg, transparent 0 10px, var(--surface-2) 10px 11px);
+    text-align: center;
+  }
+  .tag {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--fs-label);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--gate);
+  }
+  .cap {
+    margin: 0 auto;
+    max-width: 52ch;
+    font-size: var(--fs-small);
+    color: var(--muted);
+  }
+</style>

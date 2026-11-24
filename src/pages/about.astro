@@ -1,0 +1,295 @@
+---
+import Base from '../layouts/Base.astro';
+import SectionLabel from '../components/SectionLabel.astro';
+import Portrait from '../components/Portrait.astro';
+import Topo from '../components/contour/Topo.astro';
+import Button from '../components/Button.astro';
+import Contact from '../components/home/Contact.astro';
+
+const principles = [
+  {
+    title: 'Context before prompts',
+    body: 'An agent needs what a new engineer needs: a map of the system, the team’s standards in writing, and the right tools.',
+  },
+  {
+    title: 'Human approval for irreversible actions',
+    body: 'Pushes, merges, ticket changes and messages wait for a person to approve them. These guardrails are why the team trusts the tools enough to use them.',
+  },
+  {
+    title: 'Verifiable output',
+    body: 'Agent output should be easy to check: a timeline, a link to the log entry, the file and line it points to. Output that can’t be verified quickly isn’t finished.',
+  },
+  {
+    title: 'Start with recurring work',
+    body: 'Adoption is voluntary, so the first tools targeted the repetitive work that cost the team the most time.',
+  },
+];
+
+const experience = [
+  {
+    company: 'Charles Schwab',
+    meta: 'Lone Tree, Colorado · 2021 – present',
+    body: 'Senior software engineer and tech lead on the platform financial advisors use to move money and securities between client accounts. I lead delivery of partner APIs, own API contract governance and performance baselines, am the team’s primary code reviewer, and built the AI agent toolkit my team uses.',
+  },
+  {
+    company: 'Genesys Technologies',
+    meta: 'Colorado Springs, Colorado · 2016 – 2021',
+    body: 'Technical support for the CryptoPay card-payment platform. I taught myself Python here and automated account setup, returns tickets, database repair and reporting.',
+  },
+];
+
+const skills = [
+  { area: 'AI engineering', items: 'GitHub Copilot custom agents, skills and instructions · context engineering · LLM output validation · human-in-the-loop approvals · agent guardrails · MCP' },
+  { area: 'Back end', items: 'C# · .NET · ASP.NET Core · Entity Framework · REST and OpenAPI · microservices · Apache Kafka' },
+  { area: 'Front end', items: 'Angular · TypeScript · AG Grid · HTML and CSS' },
+  { area: 'Operations', items: 'SQL Server · MongoDB · Splunk · API gateways · CI/CD · xUnit' },
+  { area: 'Also', items: 'Python · PowerShell · Swift · C++' },
+];
+---
+
+<Base
+  title="About"
+  description="James Burch is a senior software engineer and tech lead in the Denver area. He works on fintech money-movement APIs and builds GitHub Copilot agents for engineering teams."
+>
+  <Topo
+    anchor="#about-summit"
+    x="80%"
+    y="220px"
+    fade="linear-gradient(to bottom, #000 0, #000 300px, rgb(0 0 0 / 0.4) 560px, rgb(0 0 0 / 0.4) 100%)"
+  />
+  <div class="head-band">
+    <header class="container page-head intro on-map">
+      <div>
+        <SectionLabel label="About" />
+        <h1>From technical support to tech lead.</h1>
+      </div>
+      <div class="summit" id="about-summit">
+        <Portrait size={200} loading="eager" class="photo" />
+      </div>
+    </header>
+  </div>
+
+  <section class="container story-wrap on-map">
+    <div class="story prose">
+      <p class="lede">
+        Senior software engineer and tech lead in the Denver area, working on fintech APIs and AI agent tooling.
+      </p>
+      <p>
+        I started in technical support at a card-payment company, configuring devices and fixing merchant accounts. To
+        handle the repetitive parts of the job, I taught myself Python and automated account setup, returns tickets,
+        database repairs and reporting. I earned a computer science degree at the same time, while working full time.
+      </p>
+      <p>
+        Charles Schwab hired me through its new-developer program in 2021. I’ve spent nearly six years since on the
+        platform financial advisors use to move money and securities between their clients’ accounts, and on the APIs
+        that let outside firms submit the same requests from their own software. I work across the stack in C#/.NET
+        and Angular.
+      </p>
+      <p>
+        Before taking the tech lead role formally in November 2025, I had been doing much of it: onboarding new
+        engineers, coordinating across teams and leading a major approval-workflow feature to release. Today I own
+        delivery, API contracts and production readiness, and I still write and review code.
+      </p>
+      <p>
+        Automation has been the common thread. Most recently I designed a GitHub Copilot toolkit of agents, skills,
+        instructions and scripts that my team uses for code review, delivery and production triage.{' '}
+        <a href="/work/agent-toolkit/">Read the case study</a>.
+      </p>
+      <p class="now"><span class="label">Currently</span> Tech lead at Charles Schwab.</p>
+    </div>
+  </section>
+
+  <section class="container section" aria-labelledby="how">
+    <SectionLabel num="01" label="How I work" id="how" as="h2" />
+    <div class="principles">
+      {
+        principles.map((p, i) => (
+          <article class="principle" data-reveal style={`--reveal-i:${i}`}>
+            <h3>{p.title}</h3>
+            <p>{p.body}</p>
+          </article>
+        ))
+      }
+    </div>
+  </section>
+
+  <section class="container section" aria-labelledby="exp">
+    <SectionLabel num="02" label="Experience" id="exp" as="h2" />
+    <div class="experience">
+      {
+        experience.map((e) => (
+          <article class="job">
+            <h3>{e.company}</h3>
+            <p class="job-meta">{e.meta}</p>
+            <p>{e.body}</p>
+          </article>
+        ))
+      }
+    </div>
+    <p class="resume-link">
+      Role-by-role detail is on the résumé. <Button href="/resume/" variant="text">See the résumé</Button>
+    </p>
+  </section>
+
+  <section class="container section" aria-labelledby="skills">
+    <SectionLabel num="03" label="Skills and education" id="skills" as="h2" />
+    <dl class="skills">
+      {
+        skills.map((s) => (
+          <div>
+            <dt>{s.area}</dt>
+            <dd>{s.items}</dd>
+          </div>
+        ))
+      }
+      <div>
+        <dt>Education</dt>
+        <dd>
+          B.S. Computer Science, Colorado Technical University, 2019. Capstone: an iOS app (SwiftUI and a Flask REST
+          API) for managing card-payment devices.
+        </dd>
+      </div>
+      <div>
+        <dt>Certifications</dt>
+        <dd>
+          Microsoft Technology Associate: Software Development Fundamentals, 2021. GitHub Trusted Committer, Charles
+          Schwab, 2025.
+        </dd>
+      </div>
+    </dl>
+  </section>
+
+  <Contact num="04" />
+</Base>
+
+<style>
+  .intro {
+    display: grid;
+    gap: var(--s-6);
+    align-items: end;
+  }
+  .intro h1 {
+    max-width: 18ch;
+    margin: 0;
+  }
+  /* Portrait as the summit of the page map (<Topo anchor="#about-summit">). */
+  .summit {
+    position: relative;
+    order: -1;
+    justify-self: start;
+    width: 128px;
+    height: 128px;
+  }
+  .summit :global(.photo) {
+    width: 100%;
+    height: 100%;
+    box-shadow:
+      0 0 0 6px var(--bg),
+      0 0 0 7.5px var(--contour-index);
+  }
+  @media (min-width: 900px) {
+    .intro {
+      grid-template-columns: 1fr auto;
+    }
+    .summit {
+      order: 0;
+      width: 200px;
+      height: 200px;
+      margin-right: var(--s-8);
+    }
+  }
+  .story p:not(.lede):not(.now) {
+    font-size: 1.125rem;
+  }
+  .lede {
+    color: var(--text);
+    margin-bottom: var(--s-6);
+  }
+  .now {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-3);
+    align-items: baseline;
+  }
+  .now .label {
+    color: var(--accent);
+  }
+  .principles {
+    display: grid;
+    gap: var(--s-5);
+  }
+  @media (min-width: 760px) {
+    .principles {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  .principle {
+    padding: var(--s-6);
+    border-radius: var(--r-lg);
+    background: var(--surface);
+    border: 1px solid var(--border);
+  }
+  .principle h3 {
+    margin-bottom: var(--s-3);
+  }
+  .principle p {
+    margin: 0;
+    color: var(--muted);
+  }
+  .experience {
+    display: grid;
+    gap: var(--s-6);
+    max-width: var(--w-prose);
+  }
+  .job h3 {
+    margin-bottom: var(--s-1);
+  }
+  .job-meta {
+    margin-bottom: var(--s-3);
+    font-family: var(--font-mono);
+    font-size: var(--fs-label);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .resume-link {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--s-3);
+    margin-top: var(--s-6);
+    color: var(--muted);
+  }
+  .skills {
+    display: grid;
+    gap: 0;
+    max-width: 60rem;
+    margin: 0;
+  }
+  .skills div {
+    display: grid;
+    gap: var(--s-1);
+    padding-block: var(--s-4);
+    border-top: 1px solid var(--border);
+  }
+  .skills div:last-child {
+    border-bottom: 1px solid var(--border);
+  }
+  @media (min-width: 700px) {
+    .skills div {
+      grid-template-columns: 12rem 1fr;
+      gap: var(--s-5);
+    }
+  }
+  .skills dt {
+    font-family: var(--font-mono);
+    font-size: var(--fs-label);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    padding-top: 0.3em;
+  }
+  .skills dd {
+    margin: 0;
+  }
+</style>

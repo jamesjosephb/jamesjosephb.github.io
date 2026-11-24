@@ -1,0 +1,72 @@
+---
+/** <FeatureGroups>: features in titled groups, laid out in two columns on wide screens. */
+interface Props {
+  groups: { title: string; items: { b: string; t: string }[] }[];
+}
+const { groups } = Astro.props;
+---
+
+<div class="groups" data-wide>
+  {
+    groups.map((g) => (
+      <section class="group">
+        <h3>{g.title}</h3>
+        <ul role="list">
+          {g.items.map((i) => (
+            <li>
+              <strong>{i.b}</strong> {i.t}
+            </li>
+          ))}
+        </ul>
+      </section>
+    ))
+  }
+</div>
+
+<style>
+  .groups {
+    display: grid;
+    gap: var(--s-6) var(--s-7);
+    width: min(var(--w-wide), calc(100vw - 2 * var(--gutter)));
+    margin: var(--s-6) 0 var(--s-7);
+    margin-inline: calc((min(var(--w-wide), calc(100vw - 2 * var(--gutter))) - 100%) / -2);
+  }
+  .group {
+    padding-top: var(--s-4);
+    border-top: 1px solid var(--border);
+  }
+  h3 {
+    margin: 0 0 var(--s-3);
+    font-size: 1.125rem;
+    font-weight: 700;
+    letter-spacing: -0.005em;
+  }
+  ul {
+    display: grid;
+    gap: var(--s-3);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  li {
+    margin: 0;
+    padding-left: var(--s-4);
+    border-left: 3px solid var(--accent-soft);
+    color: var(--muted);
+    font-size: 0.975rem;
+  }
+  strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+  @media (min-width: 900px) {
+    .groups {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  @media (min-width: 1280px) {
+    .groups {
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+  }
+</style>

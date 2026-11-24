@@ -1,0 +1,41 @@
+---
+/** A figure with a visible caption saying what to notice. Put an <Image>, <Frame> or diagram in the slot. */
+interface Props {
+  caption?: string;
+  wide?: boolean;
+  class?: string;
+}
+const { caption, wide = false, class: className } = Astro.props;
+const hasCaptionSlot = Astro.slots.has('caption');
+---
+
+<figure class:list={['figure', { wide }, className]}>
+  <slot />
+  {
+    (caption || hasCaptionSlot) && (
+      <figcaption>
+        {caption}
+        <slot name="caption" />
+      </figcaption>
+    )
+  }
+</figure>
+
+<style>
+  .figure {
+    margin: var(--s-7) 0;
+  }
+  .wide {
+    width: min(var(--w-wide), calc(100vw - 2 * var(--gutter)));
+    margin-inline: calc((min(var(--w-wide), calc(100vw - 2 * var(--gutter))) - 100%) / -2);
+  }
+  .figure :global(.expressive-code + .expressive-code) {
+    margin-top: var(--s-4);
+  }
+  figcaption {
+    margin-top: var(--s-3);
+    max-width: var(--w-prose);
+    font-size: var(--fs-small);
+    color: var(--muted);
+  }
+</style>

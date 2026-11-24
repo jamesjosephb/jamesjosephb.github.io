@@ -1,0 +1,90 @@
+---
+/** Window chrome drawn by the site around screenshots, recordings and mocks. */
+interface Props {
+  kind?: 'editor' | 'browser' | 'terminal';
+  title?: string;
+  class?: string;
+}
+const { kind = 'editor', title, class: className } = Astro.props;
+---
+
+<div class:list={['frame', kind, className]}>
+  <div class="chrome" aria-hidden={title ? undefined : 'true'}>
+    <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+    {
+      kind === 'browser' ? (
+        <span class="address">{title ?? ''}</span>
+      ) : (
+        title && <span class="title">{title}</span>
+      )
+    }
+  </div>
+  <div class="body">
+    <slot />
+  </div>
+</div>
+
+<style>
+  .frame {
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    background: var(--surface);
+    box-shadow: var(--frame-shadow);
+  }
+  .chrome {
+    display: flex;
+    align-items: center;
+    gap: var(--s-3);
+    min-height: 36px;
+    padding: 0 var(--s-4);
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-2);
+    font-family: var(--font-mono);
+    font-size: var(--fs-label);
+    color: var(--muted);
+  }
+  .dots {
+    display: inline-flex;
+    gap: 6px;
+    flex: none;
+  }
+  .dots i {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--border);
+  }
+  .title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .address {
+    flex: 1;
+    max-width: 28rem;
+    margin-inline: auto;
+    padding: 2px var(--s-3);
+    border-radius: 999px;
+    background: var(--surface);
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .terminal {
+    --surface: var(--term-bg);
+    --surface-2: var(--term-bg-2);
+    --border: var(--term-border);
+    --text: var(--term-text);
+    --muted: var(--term-muted);
+    color: var(--text);
+    background: var(--surface);
+  }
+  .body :global(img),
+  .body :global(video) {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+</style>

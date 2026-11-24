@@ -1,0 +1,220 @@
+---
+import Base from '../layouts/Base.astro';
+import Button from '../components/Button.astro';
+import Topo from '../components/contour/Topo.astro';
+import { SITE } from '../site';
+---
+
+<Base
+  title="Résumé"
+  description="Résumé of James Burch: senior software engineer and tech lead in fintech, building GitHub Copilot agents for engineering teams."
+>
+  <Topo
+    x="85%"
+    y="80px"
+    fade="linear-gradient(to bottom, rgb(0 0 0 / 0.8) 0, rgb(0 0 0 / 0.8) 320px, rgb(0 0 0 / 0.35) 560px, rgb(0 0 0 / 0.35) 100%)"
+  />
+  <div class="head-band">
+  <header class="container page-head head on-map">
+    <h1>Résumé</h1>
+    <p class="lede">AI agent engineering and technical leadership in fintech.</p>
+    <Button href={SITE.resumePdf} download="James-Burch-Resume.pdf" arrow>Download PDF</Button>
+  </header>
+  </div>
+
+  <div class="container">
+    <article class="resume">
+      <section aria-labelledby="r-summary">
+        <h2 id="r-summary" class="label">Summary</h2>
+        <p>
+          Senior software engineer and tech lead who designs AI agent tooling for engineering teams. Designed and built a
+          GitHub Copilot agent system (custom agents, skills, guardrail instructions and scripts) that the team uses for
+          code review, delivery and production triage, with scripted checks on agent output and approval gates. Tech lead on Charles Schwab’s advisor money-movement platform, with nearly
+          six years shipping regulated fintech APIs in C#/.NET and Angular.
+        </p>
+      </section>
+
+      <section aria-labelledby="r-exp">
+        <h2 id="r-exp" class="label">Experience</h2>
+        <div class="job">
+          <h3>Charles Schwab</h3>
+          <p class="role"><strong>Senior Software Engineer, Tech Lead</strong> · Jan 2021 – present</p>
+          <p class="meta">Lone Tree, Colorado</p>
+          <p class="context">
+            Advisor money-movement platform: the APIs and tools financial advisors and outside firms use to move client
+            cash and securities.
+          </p>
+
+          <h4>AI-driven engineering</h4>
+          <ul>
+            <li>
+              Built a GitHub Copilot agent system for a multi-repo .NET and Angular codebase, in use on my team and
+              shared with the wider engineering group.
+            </li>
+            <li>
+              <strong>Verified output:</strong> scripts gather the facts, the model writes its findings as structured
+              data, and a validator rejects any file, line, commit or number that is not in those facts.
+            </li>
+            <li>
+              <strong>Review:</strong> a code-review agent checks C# and Angular changes against team checklists; a
+              team-review agent prepares review notes for every open pull request.
+            </li>
+            <li>
+              <strong>Delivery:</strong> a story-delivery agent takes a story or bug end to end across repos, from the
+              ticket to code, tests, pull request and QA handoff.
+            </li>
+            <li>
+              <strong>Production triage:</strong> an agent turns a single correlation ID into a log trace and root cause
+              across services; a regression skill finds the change that introduced a defect.
+            </li>
+            <li>
+              <strong>Context engineering:</strong> per-service context docs, durable repo memory and onboarding skills
+              give agents, and new engineers, an accurate map of each system.
+            </li>
+            <li>
+              <strong>Guardrails:</strong> dry run by default; explicit approval for each irreversible or outbound
+              action, tied to the reviewed commit; isolated clones for automation; OWASP Top 10 rules that treat model
+              output as untrusted input.
+            </li>
+            <li>
+              <strong>Everyday workflow:</strong> scripts for cross-repo standup digests, pre-push checks and flaky-test
+              detection, a .NET local integration harness that needs no repository edits, and an audit of the agent
+              setup against real session history.
+            </li>
+          </ul>
+
+          <h4>Platform and leadership</h4>
+          <ul>
+            <li>
+              Tech lead (acting in 2025, formally since Nov 2025): lead delivery of third-party APIs for several types
+              of money movement, built for partner firms.
+            </li>
+            <li>
+              Set up performance engineering with log-based endpoint monitoring and before/after automated tests; own
+              API contract governance (OpenAPI, service registry, API gateway tokens).
+            </li>
+            <li>
+              Modernized a core application from SOAP to REST and built a new transfer capability for advisors, both
+              with team recognition awards; shipped firm-configurable approval rules that retired a legacy interface.
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <section aria-labelledby="r-skills">
+        <h2 id="r-skills" class="label">Skills</h2>
+        <dl class="skills">
+          <div>
+            <dt>AI engineering</dt>
+            <dd>Agent design; GitHub Copilot custom agents, skills and instructions; context and prompt engineering; LLM output validation; human-in-the-loop approvals; agent guardrails; MCP</dd>
+          </div>
+          <div>
+            <dt>Languages and frameworks</dt>
+            <dd>C#, .NET, ASP.NET Core, Entity Framework, TypeScript, Angular, Python, PowerShell, SQL</dd>
+          </div>
+          <div>
+            <dt>Platform</dt>
+            <dd>REST and OpenAPI, microservices, Apache Kafka, SQL Server, MongoDB, Splunk, API gateway, GitHub, CI/CD, xUnit</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section aria-labelledby="r-edu">
+        <h2 id="r-edu" class="label">Education and recognition</h2>
+        <ul>
+          <li><strong>B.S. Computer Science</strong>, Colorado Technical University, 2019</li>
+          <li><strong>Microsoft Technology Associate:</strong> Software Development Fundamentals, 2021</li>
+          <li><strong>GitHub Trusted Committer,</strong> Charles Schwab, 2025</li>
+          <li>
+            <strong>Schwab recognition awards (2023–2026),</strong> including team awards for two production launches and
+            an award for third-party API work
+          </li>
+        </ul>
+      </section>
+    </article>
+  </div>
+</Base>
+
+<style>
+  .head-band {
+    position: relative;
+    isolation: isolate;
+  }
+  .head h1 {
+    margin-bottom: var(--s-3);
+  }
+  .head .lede {
+    margin-bottom: var(--s-6);
+  }
+  .resume {
+    max-width: 56rem;
+  }
+  @media (min-width: 640px) {
+    .resume {
+      padding: clamp(32px, 4vw, 56px);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      background: var(--surface);
+    }
+  }
+  section + section {
+    margin-top: var(--s-7);
+  }
+  h2.label {
+    margin: 0 0 var(--s-4);
+    padding-bottom: var(--s-2);
+    border-bottom: 1px solid var(--border);
+    color: var(--accent);
+  }
+  h3 {
+    font-size: var(--fs-h3);
+    margin-bottom: var(--s-1);
+  }
+  .role {
+    margin-bottom: 0;
+  }
+  .meta {
+    margin-bottom: var(--s-3);
+    font-family: var(--font-mono);
+    font-size: var(--fs-label);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .context {
+    color: var(--muted);
+  }
+  h4 {
+    margin: var(--s-6) 0 var(--s-3);
+    font-family: var(--font-text);
+    font-size: 1.0625rem;
+    font-weight: 600;
+    letter-spacing: 0;
+  }
+  ul {
+    padding-left: 1.2rem;
+  }
+  li::marker {
+    color: var(--accent);
+  }
+  .skills {
+    margin: 0;
+  }
+  .skills div {
+    display: grid;
+    gap: var(--s-1);
+    padding-block: var(--s-2);
+  }
+  @media (min-width: 700px) {
+    .skills div {
+      grid-template-columns: 14rem 1fr;
+      gap: var(--s-4);
+    }
+  }
+  .skills dt {
+    font-weight: 600;
+  }
+  .skills dd {
+    margin: 0;
+  }
+</style>

@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>James Burch — Résumé</title>
+<style>
+  @page { size: Letter; margin: 0.5in 0.6in; }
+  * { box-sizing: border-box; }
+  body { font-family: "Segoe UI", Calibri, Arial, sans-serif; font-size: 9.8pt; line-height: 1.32; color: #1a1a1a; margin: 0; }
+  h1 { font-size: 20pt; margin: 0; letter-spacing: 0.3px; }
+  .tagline { font-weight: 600; font-size: 10.5pt; color: #1f4e79; margin: 1px 0 2px; }
+  .contact { font-size: 9pt; color: #333; }
+  .contact a { color: #333; text-decoration: none; }
+  h2 { font-size: 10.5pt; text-transform: uppercase; letter-spacing: 1px; color: #1f4e79; border-bottom: 1.2px solid #1f4e79; margin: 11px 0 5px; padding-bottom: 1px; }
+  p { margin: 0 0 4px; }
+  .job { display: flex; justify-content: space-between; font-weight: 700; margin-top: 2px; }
+  .job span:last-child { font-weight: 400; }
+  .sub { font-style: italic; color: #333; margin-bottom: 3px; }
+  h3 { font-size: 9.8pt; margin: 6px 0 2px; color: #333; }
+  ul { margin: 0 0 2px; padding-left: 15px; }
+  li { margin-bottom: 2.5px; }
+  .skills li { margin-bottom: 1.5px; }
+</style>
+</head>
+<body>
+  <h1>James Burch</h1>
+  <div class="tagline">Senior Software Engineer &amp; Tech Lead · AI Agent Engineering</div>
+  <div class="contact">Denver, CO area · burchjames90@gmail.com · <a href="https://www.linkedin.com/in/jamesjosephburch">linkedin.com/in/jamesjosephburch</a> · <a href="https://github.com/jamesjosephb">github.com/jamesjosephb</a></div>
+
+  <h2>Summary</h2>
+  <p>Senior software engineer and tech lead who designs AI agent tooling for engineering teams. Designed and built a GitHub Copilot agent system (custom agents, skills, guardrail instructions and scripts) that the team uses for code review, delivery and production triage, with scripted checks on agent output and approval gates. Tech lead on Charles Schwab's advisor money-movement platform, with nearly six years shipping regulated fintech APIs in C#/.NET and Angular.</p>
+
+  <h2>Experience</h2>
+  <div class="job"><span>Charles Schwab · Senior Software Engineer, Tech Lead</span><span>Lone Tree, CO · Jan 2021 – Present</span></div>
+  <div class="sub">Advisor money-movement platform: the APIs and tools financial advisors and outside firms use to move client cash and securities.</div>
+
+  <h3>AI-driven engineering</h3>
+  <ul>
+    <li>Built a GitHub Copilot agent system for a multi-repo .NET and Angular codebase, in use on my team and shared with the wider engineering group.</li>
+    <li><b>Verified output:</b> scripts gather the facts, the model writes its findings as structured data, and a validator rejects any file, line, commit or number that is not in those facts.</li>
+    <li><b>Review:</b> a code-review agent checks C# and Angular changes against team checklists; a team-review agent prepares review notes for every open pull request; primary code reviewer across the team's repos.</li>
+    <li><b>Delivery:</b> a story-delivery agent takes a story or bug end to end across repos, from reading the ticket to code, tests, pull request and QA handoff.</li>
+    <li><b>Production triage:</b> an agent turns a single correlation ID into a log trace and root cause across services; a regression skill finds the change that introduced a defect in any repo.</li>
+    <li><b>Context engineering:</b> per-service context docs, durable repo memory and onboarding skills give agents, and new engineers, an accurate map of each system.</li>
+    <li><b>Guardrails:</b> dry run by default; explicit approval for each irreversible or outbound action, tied to the reviewed commit; isolated clones for automation; OWASP Top 10 rules that treat model output as untrusted input.</li>
+    <li><b>Everyday workflow:</b> scripts for cross-repo standup digests, pre-push checks and flaky-test detection, a .NET local integration harness that needs no repository edits, and an audit of the agent setup against real session history.</li>
+  </ul>
+
+  <h3>Platform and leadership</h3>
+  <ul>
+    <li>Tech lead (acting in 2025, formally since Nov 2025): lead delivery of third-party APIs for several types of money movement, built for partner firms.</li>
+    <li>Set up performance engineering with log-based endpoint monitoring and before/after automated tests; own API contract governance (OpenAPI, service registry, gateway tokens).</li>
+    <li>Modernized a core application from SOAP to REST and built a new transfer capability for advisors, both with team recognition awards; shipped firm-configurable approval rules that retired a legacy interface.</li>
+  </ul>
+
+  <h2>Skills</h2>
+  <ul class="skills">
+    <li><b>AI engineering:</b> agent design, GitHub Copilot custom agents, skills and instructions, context and prompt engineering, LLM output validation, human-in-the-loop approvals, agent guardrails, MCP</li>
+    <li><b>Languages and frameworks:</b> C#, .NET, ASP.NET Core, Entity Framework, TypeScript, Angular, Python, PowerShell, SQL</li>
+    <li><b>Platform:</b> REST and OpenAPI, microservices, Apache Kafka, SQL Server, MongoDB, Splunk, API gateway, GitHub, CI/CD, xUnit</li>
+  </ul>
+
+  <h2>Education and recognition</h2>
+  <ul class="skills">
+    <li><b>B.S. Computer Science</b>, Colorado Technical University, 2019 · <b>Microsoft Technology Associate:</b> Software Development Fundamentals, 2021 · <b>GitHub Trusted Committer</b>, 2025</li>
+    <li><b>Schwab recognition awards (2023–2026),</b> including team awards for two production launches and an award for third-party API work</li>
+  </ul>
+</body>
+</html>

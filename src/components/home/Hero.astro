@@ -1,0 +1,139 @@
+---
+/**
+ * Home hero ("Contour"): copy on the left, the portrait as the summit of a topographic map on the right
+ * (on phones the summit sits above the copy). The page-wide <Topo> sheet on the home page puts its main summit
+ * under #home-summit. The agent run has its own row below the hero.
+ */
+import Button from '../Button.astro';
+import AgentRun from '../AgentRun.astro';
+import Portrait from '../Portrait.astro';
+import { triageRun } from '../../data/agent-runs/triage';
+---
+
+  <section class="hero container" aria-labelledby="hero-title">
+    <div class="copy on-map">
+      <p class="label eyebrow">AI agent engineering · Tech lead</p>
+      <h1 id="hero-title" class="headline">I build <span class="hl">AI agent tooling</span> for engineering teams.</h1>
+      <p class="sub">
+        Senior software engineer and tech lead on Charles Schwab’s advisor money-movement platform. I design GitHub
+        Copilot agents for code review, delivery and production triage, with scripted checks on their output and human approval before every irreversible
+        step.
+      </p>
+      <div class="actions">
+        <Button href="/work/agent-toolkit/" arrow>See the agent toolkit</Button>
+        <Button href="/resume/" variant="text">Résumé</Button>
+      </div>
+    </div>
+    <div class="summit" id="home-summit">
+      <Portrait size={208} loading="eager" class="photo" />
+    </div>
+  </section>
+
+<section class="run container" aria-labelledby="run-title">
+  <div class="run-cap on-map">
+    <p id="run-title" class="label run-label">Example run</p>
+    <p>An agent triaging a failed request from its correlation ID. It stops for approval before anything irreversible.</p>
+  </div>
+  <div class="demo">
+    <AgentRun run={triageRun} label="Example: an agent triaging a failed request from its correlation ID" />
+  </div>
+</section>
+
+<style>
+  .hero {
+    display: grid;
+    gap: var(--s-2);
+    padding-block: 0 var(--s-7);
+  }
+  .copy {
+    position: relative;
+    z-index: 1;
+  }
+  .eyebrow {
+    margin-bottom: var(--s-5);
+    color: var(--accent);
+  }
+  .headline {
+    font-size: clamp(2.6rem, 1.5rem + 4.4vw, 4.75rem);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.035em;
+    margin-bottom: var(--s-5);
+  }
+  .sub {
+    max-width: 48ch;
+    font-size: clamp(1.1rem, 1.02rem + 0.35vw, 1.3rem);
+    line-height: 1.5;
+    color: var(--muted);
+    margin-bottom: var(--s-6);
+  }
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--s-3) var(--s-5);
+  }
+
+  /* The summit: the photo, ringed like a survey marker; the <Topo> sheet centres its peak here. */
+  .summit {
+    position: relative;
+    order: -1;
+    height: 260px;
+  }
+  .summit :global(.photo) {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 136px;
+    height: 136px;
+    transform: translate(-50%, -50%);
+    box-shadow:
+      0 0 0 6px var(--bg),
+      0 0 0 7.5px var(--contour-index);
+  }
+
+  /* The agent run gets its own row. */
+  .run {
+    position: relative;
+    display: grid;
+    gap: var(--s-4);
+    padding-bottom: var(--s-6);
+  }
+  .run-label {
+    margin-bottom: var(--s-2);
+    color: var(--accent);
+  }
+  .run-cap p:not(.label) {
+    max-width: 36ch;
+    color: var(--muted);
+    margin: 0;
+  }
+  .demo {
+    min-width: 0;
+  }
+
+  @media (min-width: 1000px) {
+    .hero {
+      grid-template-columns: 1.25fr 0.75fr;
+      align-items: center;
+      gap: var(--s-5);
+      padding-block: var(--s-8) var(--s-9);
+    }
+    .summit {
+      order: 0;
+      height: 440px;
+    }
+    .summit :global(.photo) {
+      width: 208px;
+      height: 208px;
+    }
+    .run {
+      grid-template-columns: 1fr 2fr;
+      gap: var(--s-8);
+      padding-block: var(--s-2) var(--s-8);
+    }
+    .run-cap {
+      padding-top: var(--s-7);
+    }
+  }
+</style>

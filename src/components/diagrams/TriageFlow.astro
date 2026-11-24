@@ -1,0 +1,170 @@
+---
+/**
+ * D2: the correlation-ID triage flow as an inline SVG, six steps then a human approval gate.
+ * Inside <Steps> the step being read lights up (nodes carry data-node="1".."6").
+ * Without JS every step is lit. Colours come from CSS variables, so it follows the theme.
+ * The text equivalent is the step list beside it; this <svg> also has its own <title>/<desc>.
+ */
+interface Props {
+  class?: string;
+}
+
+const nodes = [
+  { label: 'Correlation ID', hint: 'an engineer pastes it' },
+  { label: 'Read context docs', hint: 'services · log sources' },
+  { label: 'Build log queries', hint: 'search_logs · trace' },
+  { label: 'Cross-service timeline', hint: 'UTC + business time' },
+  { label: 'Map errors to code', hint: 'file · line · commit' },
+  { label: 'Likely root cause', hint: 'with evidence links' },
+];
+const top = 14;
+const step = 78;
+const h = 54;
+const gateY = top + nodes.length * step + 14;
+---
+
+<svg
+  class:list={['triage-flow', Astro.props.class]}
+  viewBox="0 0 320 620"
+  role="img"
+  aria-labelledby="d2-title d2-desc"
+  data-flow
+>
+  <title id="d2-title">Correlation ID to root cause, in six steps</title>
+  <desc id="d2-desc">
+    1, an engineer pastes a correlation ID. 2, the agent reads the context docs. 3, it builds the log queries. 4, it
+    assembles a cross-service timeline. 5, it maps errors to code. 6, it proposes a likely root cause with evidence.
+    Then it stops: a person approves before anything is handed to the delivery agent.
+  </desc>
+
+  <line class="spine" x1="44" y1={top + h / 2} x2="44" y2={gateY + 22}></line>
+
+  {
+    nodes.map((n, i) => {
+      const y = top + i * step;
+      return (
+        <g class="node" data-node={i + 1}>
+          <rect class="box" x="16" y={y} width="292" height={h} rx="10" />
+          <circle class="dot" cx="44" cy={y + h / 2} r="14" />
+          <text class="num" x="44" y={y + h / 2 + 4.5} text-anchor="middle">
+            {i + 1}
+          </text>
+          <text class="lbl" x="70" y={y + 24}>
+            {n.label}
+          </text>
+          <text class="hint" x="70" y={y + 42}>
+            {n.hint}
+          </text>
+        </g>
+      );
+    })
+  }
+
+  <g class="gate" data-node="6">
+    <rect class="gate-box" x="16" y={gateY} width="292" height="54" rx="10"></rect>
+    <rect class="gate-mark" x="35" y={gateY + 18} width="18" height="18" rx="3"></rect>
+    <text class="lbl gate-text" x="70" y={gateY + 24}>A person approves</text>
+    <text class="hint gate-text" x="70" y={gateY + 42}>agent stops and waits</text>
+  </g>
+
+  <g class="handoff">
+    <line class="spine dashed" x1="44" y1={gateY + 54} x2="44" y2={gateY + 84}></line>
+    <rect class="ghost" x="16" y={gateY + 84} width="292" height="44" rx="10"></rect>
+    <text class="hint" x="162" y={gateY + 111} text-anchor="middle">next: hand-off to delivery agent</text>
+  </g>
+</svg>
+
+<style>
+  .triage-flow {
+    display: block;
+    width: 100%;
+    height: auto;
+    font-family: var(--font-mono);
+    overflow: visible;
+  }
+  .spine {
+    stroke: var(--border);
+    stroke-width: 2;
+  }
+  .dashed {
+    stroke-dasharray: 4 4;
+  }
+  .box {
+    fill: var(--surface);
+    stroke: var(--border);
+    stroke-width: 1;
+    transition:
+      stroke var(--t-ui) var(--ease),
+      fill var(--t-ui) var(--ease);
+  }
+  .dot {
+    fill: var(--surface-2);
+    stroke: var(--border);
+    transition: fill var(--t-ui) var(--ease);
+  }
+  .num {
+    fill: var(--muted);
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .lbl {
+    fill: var(--text);
+    font-family: var(--font-text);
+    font-size: 15px;
+    font-weight: 600;
+  }
+  .hint {
+    fill: var(--muted);
+    font-size: 11.5px;
+  }
+  .ghost {
+    fill: none;
+    stroke: var(--border);
+    stroke-dasharray: 4 4;
+  }
+  .gate-box {
+    fill: var(--surface);
+    stroke: var(--gate);
+    stroke-width: 1.5;
+  }
+  .gate-mark {
+    fill: var(--gate);
+  }
+  .gate-text {
+    fill: var(--gate);
+  }
+  .node,
+  .gate {
+    transition: opacity var(--t-ui) var(--ease);
+  }
+
+  /* Lit = done or current. Without JS (no .is-live) everything is lit. */
+  .node .dot {
+    fill: var(--accent-fill);
+    stroke: var(--accent-fill);
+  }
+  .node .num {
+    fill: var(--on-accent);
+  }
+  /* Steps not reached yet lose their lime dot; text keeps full contrast. */
+  :global(.is-live) .gate:not(.lit) .gate-box {
+    stroke: var(--border);
+  }
+  :global(.is-live) .gate:not(.lit) .gate-mark {
+    fill: var(--border);
+  }
+  :global(.is-live) .node:not(.lit) .dot {
+    fill: var(--surface-2);
+    stroke: var(--border);
+  }
+  :global(.is-live) .node:not(.lit) .num {
+    fill: var(--muted);
+  }
+  :global(.is-live) .node.current .box {
+    stroke: var(--accent);
+    stroke-width: 2.5;
+  }
+  :global(.is-live) .gate.current .gate-box {
+    stroke-width: 2.5;
+  }
+</style>

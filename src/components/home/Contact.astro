@@ -1,0 +1,61 @@
+---
+import SectionLabel from '../SectionLabel.astro';
+import Button from '../Button.astro';
+import { SITE } from '../../site';
+
+interface Props {
+  num?: string;
+}
+const { num = '03' } = Astro.props;
+const { user, domain } = SITE.email;
+const [domainName, tld] = domain.split('.');
+---
+
+<section class="container section" aria-labelledby="contact-title" id="contact">
+  <SectionLabel num={num} label="Contact" />
+  <div class="contact" data-reveal>
+    <h2 id="contact-title">Get in touch</h2>
+    <p class="intro">For questions about this work, reach me on LinkedIn or by email.</p>
+    <div class="ways">
+      <Button href={SITE.linkedin} arrow>LinkedIn</Button>
+      <p class="email-line">
+        or email{" "}
+        <a class="email" data-u={user} data-d={domain}
+          ><span class="email-text">{user} [at] {domainName} [dot] {tld}</span></a
+        >
+      </p>
+    </div>
+  </div>
+</section>
+
+<style>
+  .contact {
+    display: grid;
+    gap: var(--s-6);
+    padding-top: var(--s-2);
+  }
+  h2 {
+    max-width: 24ch;
+    font-size: var(--fs-h2);
+  }
+  .ways {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--s-4) var(--s-5);
+  }
+  .intro {
+    margin: 0;
+    max-width: 52ch;
+    color: var(--muted);
+    font-size: 1.125rem;
+  }
+  .email-line {
+    margin: 0;
+    color: var(--muted);
+  }
+  .email {
+    color: var(--text);
+    font-weight: 500;
+  }
+</style>

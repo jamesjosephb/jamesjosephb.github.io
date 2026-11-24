@@ -1,0 +1,74 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getPosts, formatDate } from '../../posts';
+
+const posts = await getPosts();
+---
+
+<Base title="Writing" description="Notes by James Burch on building AI agents for engineering teams, APIs and technical leadership.">
+  <header class="page-header prose">
+    <p class="eyebrow">Writing</p>
+    <h1>Writing</h1>
+    <p class="lede">Notes on building AI agents for engineering teams, APIs and technical leadership.</p>
+  </header>
+
+  {
+    posts.length === 0 ? (
+      <p class="prose muted">The first posts are on their way. In the meantime, see <a href="/ai-work/">what I’ve been building</a>.</p>
+    ) : (
+      <ul class="posts prose">
+        {posts.map((post) => (
+          <li>
+            <a href={`/writing/${post.id}/`}>
+              <h2>
+                {post.data.title}
+                {post.data.draft && <span class="draft">Draft</span>}
+              </h2>
+            </a>
+            <p class="muted meta">
+              <time datetime={post.data.pubDate.toISOString()}>{formatDate(post.data.pubDate)}</time>
+            </p>
+            <p>{post.data.description}</p>
+          </li>
+        ))}
+      </ul>
+    )
+  }
+</Base>
+
+<style>
+  .posts {
+    list-style: none;
+    padding: 0;
+  }
+  .posts li {
+    padding-block: 1.25rem;
+    border-bottom: 1px solid var(--border);
+    margin: 0;
+  }
+  .posts a {
+    text-decoration: none;
+  }
+  .posts a:hover h2 {
+    text-decoration: underline;
+  }
+  .posts h2 {
+    margin: 0 0 0.2rem;
+    font-size: 1.3rem;
+  }
+  .meta {
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+  }
+  .draft {
+    display: inline-block;
+    vertical-align: middle;
+    margin-left: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    background: #fde68a;
+    color: #713f12;
+  }
+</style>

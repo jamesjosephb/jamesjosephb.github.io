@@ -1,0 +1,285 @@
+@import './tokens.css';
+
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 200ms;
+  animation-timing-function: var(--ease);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-padding-top: calc(var(--header-h) + 16px);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-text);
+  font-size: var(--fs-body);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  font-optical-sizing: auto;
+}
+
+main {
+  flex: 1 0 auto;
+  /* Pages put a <Topo> map sheet behind their content; it sits at z-index -1 inside this stacking context. */
+  position: relative;
+  isolation: isolate;
+}
+
+/* Turn off transitions for one frame while the theme switches (no colour flashes). */
+.theme-switching *,
+.theme-switching *::before,
+.theme-switching *::after {
+  transition: none !important;
+}
+
+img,
+svg,
+video {
+  max-width: 100%;
+  height: auto;
+}
+
+a {
+  color: var(--accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+
+a:hover {
+  text-decoration-thickness: 2px;
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+::selection {
+  background: var(--signal);
+  color: var(--on-signal);
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+  margin: 0 0 var(--s-4);
+}
+
+h1 {
+  font-size: var(--fs-h1);
+  font-weight: 700;
+}
+
+h2 {
+  font-size: var(--fs-h2);
+}
+
+h3 {
+  font-size: var(--fs-h3);
+  line-height: 1.2;
+}
+
+p,
+ul,
+ol,
+blockquote,
+dl {
+  margin: 0 0 var(--s-4);
+}
+
+p {
+  text-wrap: pretty;
+}
+
+li + li {
+  margin-top: var(--s-2);
+}
+
+code,
+kbd,
+samp {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+:not(pre) > code {
+  background: var(--surface-2);
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: var(--s-7) 0;
+}
+
+/* Layout helpers */
+.container {
+  width: 100%;
+  max-width: calc(var(--w-content) + 2 * var(--gutter));
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.container-wide {
+  max-width: calc(var(--w-wide) + 2 * var(--gutter));
+}
+
+.prose {
+  max-width: var(--w-prose);
+}
+
+.section {
+  margin-top: var(--section-gap);
+}
+
+.page-head {
+  padding-block: clamp(48px, 8vw, 112px) var(--s-6);
+}
+
+/* Type helpers */
+.display {
+  font-family: var(--font-display);
+  font-size: var(--fs-display);
+  font-weight: 700;
+  line-height: 0.98;
+  letter-spacing: -0.03em;
+}
+
+.lede {
+  font-size: clamp(1.15rem, 1.05rem + 0.45vw, 1.35rem);
+  line-height: 1.5;
+  color: var(--muted);
+  max-width: 58ch;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+.label {
+  font-family: var(--font-mono);
+  font-size: var(--fs-label);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* The highlighter: a soft lake-blue block behind key words. */
+.hl {
+  background: var(--signal);
+  color: var(--on-signal);
+  padding-inline: 0.1em;
+  border-radius: 6px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: absolute;
+  left: var(--gutter);
+  top: -100px;
+  z-index: 100;
+  padding: var(--s-2) var(--s-4);
+  background: var(--accent-fill);
+  color: var(--on-accent);
+  border-radius: var(--r-sm);
+  font-weight: 600;
+}
+
+.skip-link:focus {
+  top: var(--s-3);
+}
+
+/* Reveal on scroll (progressive: content is visible without JS or with reduced motion). */
+@media (prefers-reduced-motion: no-preference) {
+  .js [data-reveal] {
+    opacity: 0;
+    transform: translateY(12px);
+    transition:
+      opacity var(--t-reveal) var(--ease),
+      transform var(--t-reveal) var(--ease);
+    transition-delay: calc(var(--reveal-i, 0) * 60ms);
+  }
+
+  .js [data-reveal].is-visible {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  @view-transition {
+    navigation: none;
+  }
+}
+
+/* Text over the full-strength topo map gets a halo in the page colour, as labels do on a printed map,
+   so it keeps its contrast where a contour line runs under it. Elements with their own fill opt out. */
+/* Text on the map: a page-coloured halo (token --halo). .on-map covers a block's text; .halo marks one element. */
+.on-map :where(h1, h2, h3, p, li, dt, dd, span, a, figcaption),
+.halo {
+  text-shadow: var(--halo);
+}
+.on-map :where(p.label) {
+  width: fit-content;
+  background: var(--knockout);
+  box-shadow: 0 0 0 5px var(--knockout);
+  border-radius: 3px;
+}
+.on-map :where(.btn, .btn *, .hl) {
+  text-shadow: none;
+}

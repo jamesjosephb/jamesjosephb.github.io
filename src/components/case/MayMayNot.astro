@@ -1,0 +1,101 @@
+---
+/** F2: what an agent may do on its own vs what needs a person's approval. Mirrors safe-actions.instructions.md. */
+const rows = [
+  { may: 'Read code, docs, logs and tickets', ask: 'Push a branch, open or merge a pull request' },
+  { may: 'Run builds, tests and read-only scripts', ask: 'Change a ticket’s status or assignee' },
+  { may: 'Create a local branch and commit to it', ask: 'Send or post anything a person will read' },
+  { may: 'Draft PR descriptions, review notes and replies', ask: 'Add or upgrade a package' },
+  { may: 'Propose a root cause with evidence', ask: 'Touch any environment beyond the local machine' },
+];
+---
+
+<figure class="mmn">
+  <div class="scroll">
+    <table>
+      <caption class="sr-only">What an agent may do on its own, and what needs a person’s approval first</caption>
+      <thead>
+        <tr>
+          <th scope="col" class="may-h">May do alone</th>
+          <th scope="col" class="ask-h"><span class="sq" aria-hidden="true"></span>Asks a person first</th>
+        </tr>
+      </thead>
+      <tbody>
+        {
+          rows.map((r) => (
+            <tr>
+              <td>{r.may}</td>
+              <td>{r.ask}</td>
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </div>
+  <figcaption>
+    The right-hand column is where the agent stops, shows exactly what it is about to do, and waits. A yes covers one
+    action, not the rest of the session.
+  </figcaption>
+</figure>
+
+<style>
+  .mmn {
+    margin: var(--s-7) 0;
+  }
+  .scroll {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    background: var(--surface);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9875rem;
+    line-height: 1.45;
+  }
+  th,
+  td {
+    width: 50%;
+    padding: var(--s-3) var(--s-4);
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    font-family: var(--font-mono);
+    font-size: var(--fs-label);
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+    padding-block: var(--s-4) var(--s-3);
+  }
+  .may-h {
+    color: var(--accent);
+  }
+  .ask-h {
+    color: var(--gate);
+  }
+  .sq {
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    margin-right: 8px;
+    border-radius: 2px;
+    background: var(--gate);
+  }
+  td + td,
+  th + th {
+    border-left: 1px solid var(--border);
+  }
+  td + td {
+    background: color-mix(in srgb, var(--gate) 5%, transparent);
+  }
+  tbody tr + tr td {
+    border-top: 1px solid var(--border);
+  }
+  figcaption {
+    margin-top: var(--s-3);
+    font-size: var(--fs-small);
+    color: var(--muted);
+  }
+</style>

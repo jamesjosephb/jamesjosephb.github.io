@@ -1,0 +1,51 @@
+---
+import SectionLabel from '../SectionLabel.astro';
+import Button from '../Button.astro';
+---
+
+<section class="container section" aria-labelledby="about-title">
+  <SectionLabel num="02" label="About" />
+  <div class="teaser" data-reveal>
+    <div class="text">
+      <h2 id="about-title">From technical support to tech lead.</h2>
+      <p>
+        I started in technical support at a payments company, where I taught myself Python to automate repetitive
+        work. After a computer science degree and nearly six years at Charles Schwab, I lead delivery on the platform
+        financial advisors use to move money and securities, and I build the agent tooling my team uses.
+      </p>
+      <p class="now">
+        <span class="label">Currently</span>
+        Tech lead at Charles Schwab.
+      </p>
+      <Button href="/about/" variant="secondary" arrow>More about me</Button>
+    </div>
+  </div>
+</section>
+
+<style>
+  .teaser {
+    display: grid;
+    gap: var(--s-6);
+    align-items: start;
+  }
+  h2 {
+    max-width: 22ch;
+  }
+  .text > p {
+    max-width: 60ch;
+    color: var(--muted);
+    font-size: 1.125rem;
+  }
+  .now {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--s-3);
+    margin-bottom: var(--s-6);
+    color: var(--text) !important;
+    font-size: 1rem !important;
+  }
+  .now .label {
+    color: var(--accent);
+  }
+</style>

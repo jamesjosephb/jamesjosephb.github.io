@@ -1,0 +1,177 @@
+---
+title: 'finance-sync: a private finance tool with a read-only MCP connector for Claude'
+eyebrow: Personal project
+kind: personal
+status: Working, in early use
+summary: A self-hosted tool that syncs bank and card transactions into a local database, with a private web app and a read-only MCP connector so Claude can answer questions about spending. I designed and directed it, and built it with Claude Code.
+cardSummary: A self-hosted finance tool in C# and .NET, with a private web app and a read-only MCP connector for Claude. I designed and directed it, and built it with Claude Code.
+role: Designer and director, solo project
+setting: Personal project
+stack:
+  - C#
+  - .NET 10
+  - ASP.NET Core
+  - SQLite
+  - Model Context Protocol
+  - Docker
+  - Tailscale
+  - Claude Code
+glance:
+  - k: What it is
+    v: A personal finance tool. It syncs bank and card transactions into a local SQLite database once a day, builds a monthly report, and serves a small private web app for browsing, searching and adding notes.
+  - k: My part
+    v: I designed and directed it, and built it with Claude Code, an AI coding agent.
+  - k: Status
+    v: Working and in early use at home. The repository is private. Every screenshot on this page uses made-up demo data.
+cover: ../../assets/work/finance-sync/01-overview-october-light.webp
+coverDark: ../../assets/work/finance-sync/01-overview-october-dark.webp
+coverQuality: 90
+coverAlt: 'The monthly overview: money in, spending, left over, savings rate and fixed bills, with highlights below.'
+coverCaption: 'The monthly overview, on demo data. Like every image on this page, it shows made-up accounts and amounts.'
+ogImage: /og/finance-sync.jpg
+ogImageAlt: 'finance-sync: the monthly overview of a household finance app, on made-up demo data.'
+order: 20
+---
+
+import SectionLabel from '../../components/SectionLabel.astro';
+import Shot from '../../components/case/Shot.astro';
+import Gallery from '../../components/case/Gallery.astro';
+import categoriesLight from '../../assets/work/finance-sync/02-categories-and-bills-light.webp';
+import categoriesDark from '../../assets/work/finance-sync/02-categories-and-bills-dark.webp';
+import searchLight from '../../assets/work/finance-sync/03-transaction-search-light.webp';
+import searchDark from '../../assets/work/finance-sync/03-transaction-search-dark.webp';
+import detailLight from '../../assets/work/finance-sync/04-transaction-detail-light.webp';
+import detailDark from '../../assets/work/finance-sync/04-transaction-detail-dark.webp';
+import reportLight from '../../assets/work/finance-sync/05-monthly-report-light.webp';
+import reportDark from '../../assets/work/finance-sync/05-monthly-report-dark.webp';
+import phoneLight from '../../assets/work/finance-sync/06-overview-phone-light.webp';
+import phoneDark from '../../assets/work/finance-sync/06-overview-phone-dark.webp';
+import Decisions from '../../components/case/Decisions.astro';
+import FinanceSyncArchitecture from '../../components/diagrams/FinanceSyncArchitecture.astro';
+import FinanceSyncQuestionFlow from '../../components/diagrams/FinanceSyncQuestionFlow.astro';
+import { gallery, phone, decisions } from '../../data/finance-sync';
+
+<SectionLabel num="01" label="What it is" />
+
+## Bank data in a local database, and nothing on the public internet
+
+finance-sync is a tool I built for my own household finances. Once a day it pulls bank and credit-card transactions through SimpleFIN Bridge, a read-only bank-data service, into a SQLite database on my own computer. Three things are built on that one database: a monthly report (a dashboard, a spreadsheet and a PDF), a small web app for browsing and searching transactions, and an MCP (Model Context Protocol) connector that lets Claude answer plain-English questions such as “How much did I spend on groceries since August?”
+
+I built it for two reasons. I wanted my own records in a format I control. I also wanted a small, real system where I could design an MCP connector the way I think one should be built for sensitive data: read-only, narrowly scoped, and clear about what it sends where. Because the code and the data are mine, it is the one place I can show that design in full.
+
+I designed and directed the project, and it was built with Claude Code, an AI coding agent.
+
+<SectionLabel num="02" label="Screenshots" />
+
+## Screenshots
+
+These images come from a demo database of made-up data: a fictional bank, fictional merchants and invented amounts. None of my own financial data appears on this page.
+
+<Gallery
+  label="finance-sync screenshots, on demo data"
+  aspect="auto"
+  quality={90}
+  items={[
+    { image: categoriesLight, dark: categoriesDark, ...gallery.categories },
+    { image: searchLight, dark: searchDark, ...gallery.search },
+    { image: detailLight, dark: detailDark, ...gallery.detail },
+    { image: reportLight, dark: reportDark, ...gallery.report },
+  ]}
+/>
+
+<Shot
+  image={phoneLight}
+  dark={phoneDark}
+  aspect="auto"
+  quality={90}
+  maxWidth="300px"
+  sizes="300px"
+  {...phone}
+/>
+
+<SectionLabel num="03" label="Architecture" />
+
+## Three programs, one shared library, one database
+
+The system is three small programs that share one library.
+
+- **The command-line tool** runs on a schedule. It is the only part that talks to the bank feed and the only writer of bank data. It also builds the monthly report.
+- **The web app** serves the browser pages and a JSON API. It reads the same database and writes only notes, category changes and their audit records.
+- **The MCP connector** runs beside Claude Desktop. It has no access to the database and shares no code with the other programs. It knows only the API’s JSON, so the API stays the single gate to the data, with one set of access rules.
+- **The shared library** holds storage, categorization and the report model, so the report, the web app and Claude’s answers all come from the same numbers.
+
+<FinanceSyncArchitecture caption="The bank feed is the only way data comes in. Devices reach the web app over the private network, and the connector reaches the data only through the API." />
+
+The decisions that shaped it, with what each one costs.
+
+<Decisions rows={decisions} caption="Design decisions, why each was made, and its trade-off" />
+
+<SectionLabel num="04" label="The MCP connector" />
+
+## A read-only MCP connector for Claude
+
+The connector is a small local MCP server, built with the official Model Context Protocol SDK for .NET. It runs on the same computer as Claude Desktop and calls the web app’s API with a personal access token. It offers eight tools, and every one of them only reads.
+
+| Tool | What it returns |
+| --- | --- |
+| `search_transactions` | Transactions matching text, dates, category, account or amount, with totals for everything that matched |
+| `get_transaction` | One transaction with its change history |
+| `month_summary` | Income, spending, net and savings rate for a month, compared with earlier months |
+| `spending_by_category` | Totals per category for a date range |
+| `trend` | Income, spending and net per month |
+| `list_accounts`, `list_categories` | The connected accounts and the category list |
+| `recurring_charges` | Bills and subscriptions, and whether each was charged, changed or missed |
+
+One question, end to end:
+
+<FinanceSyncQuestionFlow />
+
+1. A person asks Claude Desktop a question, for example “How much did we spend on dining in October?”
+2. Claude picks a tool, for example `search_transactions` with a category and a date range.
+3. Claude Desktop passes the call to the connector, which runs on the same computer.
+4. The connector calls the web app’s API over HTTPS on the private network, with a read-only key.
+5. The API returns at most 50 rows plus totals, and the connector hands them to Claude. The tool descriptions have already told Claude that bank text is data, not instructions.
+6. Claude writes the answer. The tool result is sent to Anthropic as part of the conversation.
+
+A read-only key is refused by every endpoint that writes, so text in a transaction or a note cannot steer Claude into changing data.
+
+The design decisions:
+
+- **No write tools exist.** In the web app, a signed-in person can change a category or add a note. The connector exposes neither, whatever its token would allow.
+- **Tokens are scoped and expire.** A token is read or write, lasts 90 days by default, is shown once and is stored only as a hash. It can be revoked at any time, and changing the owner’s password revokes it.
+- **Bank text is treated as untrusted.** Transaction descriptions and notes are written by banks and by other people. Each tool description tells the model to treat that text as data to report, never as instructions to follow. Because nothing can be changed through the connector, text that tried to steer the model could affect an answer but not a record.
+- **Results are capped.** A search returns at most 50 rows per page plus totals, so one question cannot pull the whole history.
+- **It is local on purpose.** A remote connector has to be reachable from the public internet. This server is not, so the connector runs beside Claude Desktop and reaches the server over the private network.
+- **It says what leaves the network.** Anything Claude reads through the connector is sent to Anthropic as part of the conversation. The documentation states this plainly, so the person using it can decide what to ask.
+
+<SectionLabel num="05" label="Security" />
+
+## Private by default
+
+- **Not on the internet.** The web app listens only on the computer it runs on and refuses to start on any other address unless that is switched on deliberately. Other devices reach it over a private Tailscale network.
+- **No sign-up page and no default account.** Users and tokens are created from the command line on the server.
+- **Sign-in on every request.** Every API endpoint except the sign-in step itself requires a signed-in user or a valid token, and a test lists the endpoints and checks this.
+- **Every change is recorded.** A note or category change stores who made it, the old and new value, and whether it came through the browser or a token.
+- **Financial data stays out of the repository.** The app refuses to use a data folder inside a git repository, the ignore rules block data files, and a pre-commit hook blocks databases, bank exports, credentials and real email addresses.
+- **A written threat model.** The documentation lists each asset, what protects it and what risk remains.
+
+<SectionLabel num="06" label="Testing and documentation" />
+
+## Tested offline, on made-up data
+
+The project has more than 500 automated tests, and they run offline. The bank feed is replaced by a fake HTTP handler, the web app tests run the real application in memory against temporary folders, and every fixture is synthetic. Some tests guard the security rules directly: one checks that every endpoint requires sign-in, and one scans the front end for inline scripts. The build treats warnings as errors.
+
+## An architecture document the tests keep current
+
+The repository has an architecture document with diagrams of the system, its runtime flows, both database schemas, the trust boundaries and the design decisions. One section lists every project, command, API endpoint, connector tool and database table. Tests compare those lists with the code in both directions, and fail with the exact missing or extra entries when they differ.
+
+The project’s instructions for the coding agent say to update the document in the same change as the code. With the tests behind that instruction, the document cannot quietly fall out of date as an agent makes changes.
+
+<SectionLabel num="07" label="Status" />
+
+## Where it stands
+
+- **Working:** the daily sync, CSV import for older history, the monthly report, the web app and the connector.
+- **Not built yet:** the daily sync runs only on Windows, because the bank access key is stored with Windows data protection. A Docker setup for a Linux server is written, and moving the sync there needs a different secret store first.
+- **Not planned:** using the connector from Claude on a phone or on the web. That would need a public endpoint, which this design avoids.
+- **The repository is private.**

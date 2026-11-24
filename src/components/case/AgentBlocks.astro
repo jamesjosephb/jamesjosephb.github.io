@@ -1,0 +1,178 @@
+---
+/** §5: three larger agent blocks, then a compact icon list of the smaller pieces. */
+const agents = [
+  {
+    name: 'code-reviewer',
+    title: 'Code review',
+    body: 'Checks C# and Angular changes against the team’s own checklists before a person reviews. Findings come back grouped as blocking, should-fix and nit, each with the file, the line and a suggested change.',
+    gate: 'Never approves or merges.',
+  },
+  {
+    name: 'story-delivery',
+    title: 'Story delivery',
+    body: 'Takes a ticket end to end: finds the affected services, writes the code and tests, opens the pull request and prepares the QA hand-off.',
+    gate: 'Stops for approval before each push, PR and ticket change.',
+  },
+  {
+    name: 'pr-triage',
+    title: 'Pull request triage',
+    body: 'Checks the health of open pull requests (builds, review comments, merge conflicts) and prepares replies to reviewers.',
+    gate: 'Prepares replies and publishes nothing.',
+  },
+];
+
+const small = [
+  {
+    name: 'Team review sweep',
+    line: 'Prepares review notes for teammates’ open pull requests as local documents. It posts nothing.',
+    icon: 'review',
+  },
+  { name: 'Regression tracing', line: 'From a defect back to the change that introduced it.', icon: 'trace' },
+  { name: 'Repo memory', line: 'Decisions and gotchas for each repository, written down once.', icon: 'memory' },
+  { name: 'Local API wiring', line: 'Runs a front end against local services in one step.', icon: 'plug' },
+  { name: 'Standup digest', line: 'Yesterday’s commits and PRs across repos, summarised.', icon: 'list' },
+  { name: 'Pre-push preflight', line: 'Build, tests, lint and dependency checks before a push.', icon: 'check' },
+  { name: 'Flaky-test gauntlet', line: 'Reruns a suspect test until it proves itself either way.', icon: 'repeat' },
+];
+
+const icons: Record<string, string> = {
+  trace: 'M3 13h3l2-6 3 9 2-6h4',
+  memory: 'M5 4h10v13l-5-3-5 3z',
+  plug: 'M8 3v4M12 3v4M6 7h8v3a4 4 0 0 1-8 0zM10 14v3',
+  list: 'M7 6h9M7 10h9M7 14h6M4 6h.01M4 10h.01M4 14h.01',
+  check: 'M10 3l6 3v4c0 4-3 6-6 7-3-1-6-3-6-7V6zM7.5 10l2 2 3.5-4',
+  repeat: 'M4 9a6 6 0 0 1 10.5-3.5L16 7M16 3v4h-4M16 11a6 6 0 0 1-10.5 3.5L4 13M4 17v-4h4',
+  review: 'M5 3h7l3 3v11H5zM12 3v3h3M8 10h4M8 13h3',
+};
+---
+
+<div class="agents" data-wide>
+  <ul class="big" role="list">
+    {
+      agents.map((a) => (
+        <li class="card">
+          <p class="agent-name">{a.name}</p>
+          <h3>{a.title}</h3>
+          <p class="body">{a.body}</p>
+          <p class="gate">
+            <span class="sq" aria-hidden="true" />
+            {a.gate}
+          </p>
+        </li>
+      ))
+    }
+  </ul>
+  <ul class="small" role="list" aria-label="Smaller skills and scripts">
+    {
+      small.map((s) => (
+        <li>
+          <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true">
+            <path d={icons[s.icon]} />
+          </svg>
+          <span>
+            <strong>{s.name}</strong>
+            <span class="line">{s.line}</span>
+          </span>
+        </li>
+      ))
+    }
+  </ul>
+</div>
+
+<style>
+  .agents {
+    margin: var(--s-6) 0 var(--s-7);
+  }
+  @media (min-width: 960px) {
+    .agents {
+      position: relative;
+      z-index: 1;
+      width: min(var(--w-content), calc(100vw - 2 * var(--gutter)));
+      margin-inline: calc((min(var(--w-content), calc(100vw - 2 * var(--gutter))) - 100%) / -2);
+    }
+  }
+  ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  li {
+    margin: 0;
+  }
+  .big {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+    gap: var(--s-4);
+  }
+  .card {
+    display: flex;
+    flex-direction: column;
+    padding: var(--s-5);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    background: var(--surface);
+  }
+  .agent-name {
+    margin-bottom: var(--s-3);
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--accent);
+  }
+  .body {
+    flex: 1;
+    color: var(--muted);
+    font-size: 1rem;
+  }
+  .gate {
+    display: flex;
+    gap: var(--s-2);
+    align-items: baseline;
+    margin: 0;
+    padding-top: var(--s-3);
+    border-top: 1px dashed var(--border);
+    font-size: var(--fs-small);
+    color: var(--gate);
+  }
+  .sq {
+    flex: none;
+    width: 9px;
+    height: 9px;
+    border-radius: 2px;
+    background: var(--gate);
+  }
+  .small {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+    gap: var(--s-4) var(--s-6);
+    margin-top: var(--s-6);
+    padding-top: var(--s-6);
+    border-top: 1px solid var(--border);
+  }
+  .small li {
+    display: grid;
+    grid-template-columns: 36px 1fr;
+    gap: var(--s-3);
+    align-items: start;
+    line-height: 1.4;
+  }
+  .small svg {
+    width: 36px;
+    height: 36px;
+    padding: 7px;
+    border-radius: var(--r-sm);
+    background: var(--surface-2);
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .small strong {
+    display: block;
+    font-weight: 600;
+  }
+  .line {
+    font-size: var(--fs-small);
+    color: var(--muted);
+  }
+</style>

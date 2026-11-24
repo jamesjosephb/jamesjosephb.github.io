@@ -1,0 +1,35 @@
+---
+/** Numbered mono eyebrow, e.g. "01 · WORK". */
+interface Props {
+  num?: string;
+  label: string;
+  id?: string;
+  as?: 'p' | 'h2' | 'span';
+}
+const { num, label, id, as: Tag = 'p' } = Astro.props;
+---
+
+<Tag class="section-label" id={id}>
+  {num && <span class="num">{num}</span>}
+  {num && <span class="dot" aria-hidden="true">·</span>}
+  <span>{label}</span>
+</Tag>
+
+<style>
+  .section-label {
+    display: flex;
+    align-items: center;
+    gap: 0.6em;
+    margin: 0 0 var(--s-5);
+    font-family: var(--font-mono);
+    font-size: var(--fs-label);
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    line-height: 1.4;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .num {
+    color: var(--accent);
+  }
+</style>

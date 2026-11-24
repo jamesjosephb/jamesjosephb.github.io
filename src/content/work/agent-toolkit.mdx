@@ -1,0 +1,366 @@
+---
+title: A GitHub Copilot agent toolkit for a multi-repo fintech platform
+eyebrow: Case study · 2026
+summary: A set of custom agents, skills, guardrail instructions and scripts that my team uses for code review, delivery and production triage.
+role: Designer and builder, tech lead
+setting: Regulated fintech, multi-repo
+stack:
+  - GitHub Copilot custom agents
+  - Skills
+  - Instructions
+  - MCP
+  - Python
+  - PowerShell
+  - Splunk
+  - .NET
+  - Angular
+transitionName: case-agent-toolkit
+order: 1
+kind: professional
+featured: true
+cardSummary: Custom agents, skills, guardrail instructions and scripts for a multi-repo .NET and Angular codebase. I designed and built the toolkit, and my team uses it for code review, delivery and production triage.
+glance:
+  - k: Problem
+    v: An AI coding assistant sees one repository at a time and knows nothing about the team’s standards, logs or how the services connect.
+  - k: What I built
+    v: Custom agents, skills, instruction files and scripts for code review, story delivery and production triage. Scripts check what the agents report, and a person approves every irreversible step.
+  - k: My part
+    v: I designed and built the toolkit, as tech lead on the team that uses it.
+  - k: Result
+    v: In use on my own team, and shared with the wider engineering group after I demonstrated it. Colleagues who took pieces of it told me they helped.
+---
+
+import SectionLabel from '../../components/SectionLabel.astro';
+import Figure from '../../components/Figure.astro';
+import AgentRun from '../../components/AgentRun.astro';
+import { triageRun } from '../../data/agent-runs/triage';
+import VideoLoop from '../../components/case/VideoLoop.astro';
+import MediaSlot from '../../components/case/MediaSlot.astro';
+import BeforeAfter from '../../components/case/BeforeAfter.astro';
+import Constraints from '../../components/case/Constraints.astro';
+import CodeTabs from '../../components/case/CodeTabs.astro';
+import Steps from '../../components/case/Steps.astro';
+import Step from '../../components/case/Step.astro';
+import TriageReport from '../../components/case/TriageReport.astro';
+import AgentBlocks from '../../components/case/AgentBlocks.astro';
+import MayMayNot from '../../components/case/MayMayNot.astro';
+import ArchitectureDiagram from '../../components/diagrams/ArchitectureDiagram.astro';
+import TriageFlow from '../../components/diagrams/TriageFlow.astro';
+import CheckedOutputDiagram from '../../components/diagrams/CheckedOutputDiagram.astro';
+
+<VideoLoop
+  id="R2"
+  wide
+  label="Story to pull request: the delivery agent reads a ticket, changes code and tests, and stops before pushing"
+  caption="A story becomes a tested pull request. Slow parts are sped up and labelled; the agent stops before every push."
+/>
+
+<SectionLabel num="01" label="The problem" />
+
+## Out of the box, the assistant lacked context
+
+Our platform is many services and front ends, each in its own repository, in a regulated financial domain. Out of the box, an AI coding assistant sees one file or one repository at a time. It knows nothing about our standards, can’t see production logs, and has no idea how the services connect.
+
+The approach was to onboard the model the way we onboard a new engineer: an accurate map of the system, written standards, the right tools, and clear limits on what it may do without approval.
+
+<BeforeAfter />
+
+<SectionLabel num="02" label="Constraints" />
+
+## Constraints that shaped the design
+
+Each of these constraints shows up somewhere in the design below.
+
+<Constraints />
+
+<SectionLabel num="03" label="Architecture" />
+
+## Four layers, each with one job
+
+The main design decision for each piece was which layer it belongs in. **Instructions** hold standards. **Skills** hold repeatable procedures. **Agents** combine them to do a whole job. **Scripts** do the parts that should give the same answer every time. Beside them sit a short **context doc** for each service and a **repo memory** of decisions and gotchas, so neither people nor agents have to rediscover them.
+
+<ArchitectureDiagram />
+
+All of it is versioned in a git repository of its own. A file watcher commits each change after a scan for secrets, so there is a full history of what every agent was told. The examples below are rewritten for a fictional demo app, “Fourteener Transfers”, so no internal code is shown.
+
+<CodeTabs
+  label="Example toolkit files from the demo repo"
+  labels={['code-reviewer.agent.md', 'log-root-cause/SKILL.md', 'security.instructions.md']}
+  caption="An agent, a skill and an instruction file from the demo repo. The highlighted line is the approval gate: the hand-off to the delivery agent is offered, never sent on its own."
+>
+
+```md title=".github/agents/code-reviewer.agent.md" wrap {8}
+---
+description: Reviews a pull request against Fourteener's checklists and groups findings by severity.
+tools: ['search', 'usages', 'problems', 'changes', 'githubRepo']
+handoffs:
+  - label: Fix the blocking findings
+    agent: story-delivery
+    prompt: Fix the blocking findings above. One commit per finding.
+    send: false
+---
+
+# Code reviewer
+
+You review one pull request in the Fourteener Transfers repo. You do not edit files.
+
+## Before you start
+1. Read `docs/context/<service>.md` for every service the diff touches.
+2. Read `.memory/repo-memory.md` for known gotchas.
+
+## What to check
+- Money: amounts are `decimal`, never `double`, and rounding is explicit.
+- Time: cut-offs are compared in business time (America/Denver), never in UTC.
+- Logging: new code logs event names with the correlation ID; clients get a code, not a message.
+- Tests: a behaviour change without a test is a **should-fix**.
+
+## Output
+Group findings as **Blocking**, **Should fix** and **Nit**. For each: file and line, what is wrong,
+why it matters, and a suggested change. Quote the code. If you're unsure, say what would settle it.
+Never approve or merge the pull request.
+```
+
+```md title=".github/skills/log-root-cause/SKILL.md" wrap {18-20}
+---
+name: log-root-cause
+description: Turn one correlation ID into a cross-service timeline and a likely root cause, with evidence. Use when someone pastes a correlation ID or a failed request.
+---
+
+# Log root cause
+
+## Steps
+1. Read `docs/context/services.md` to find which services and log sources handle the request.
+2. Run `trace_correlation_id` (fourteener-logs MCP server). Sort events by time.
+3. Build a timeline: UTC and business time, service, event, level, one-line summary.
+4. For the first warning or error, find the code that logged it, then follow the call back
+   to the decision that caused it.
+5. Check what changed: `git log` on those files since the last known-good release.
+6. Write the report. Every claim links to a log query, a file and line, or a commit.
+
+## Rules
+- Read only. Don't edit code, replay requests or touch any environment.
+- Say how sure you are and what you did not check.
+- Stop after the report. A person decides what happens next.
+```
+
+```md title=".github/instructions/security.instructions.md" wrap
+---
+applyTo: 'src/**/*.cs'
+description: Security rules for every C# change, based on the OWASP Top 10.
+---
+
+# Security (C#)
+
+- Access control: every endpoint declares its authorization policy. No anonymous writes.
+- Injection: no string-built queries or commands. Use parameters.
+- Logging: log event names and IDs. Never log names, tokens or full account numbers.
+- Errors: clients get an error code and the correlation ID, never a stack trace.
+- Secrets: nothing in code or appsettings files. Read them from configuration at runtime.
+- Dependencies: a new or upgraded package must pass `scripts/ready.ps1` first.
+
+If a change would break one of these rules, stop and say which rule and why instead of writing it.
+```
+
+</CodeTabs>
+
+<SectionLabel num="04" label="Checked output" />
+
+## Scripts own the facts, the model owns the judgement
+
+A model that reviews code can cite a file that is not in the diff, or a line number that does not exist. Asking it to be careful does not fix that, so the toolkit does not depend on it. The code-review agent, the pull-request triage agent and the audit of the setup itself all run the same four-step pipeline.
+
+<CheckedOutputDiagram />
+
+1. **Gather.** A script collects the ground truth as JSON: the commits, the changed files and line ranges, the review threads and the build results. No model is involved.
+2. **Author.** The model reads the facts and the code, then writes its findings as structured data, not prose. Every finding has to cite a file and line, a commit or a review thread.
+3. **Render.** A script turns the findings into the report. The script fixes the format, so two runs look the same.
+4. **Validate.** In strict mode the renderer rejects any file, line, commit, thread or number that is not in the gathered facts. A rejected run fails and says why. It does not write a report with the bad finding quietly removed.
+
+The split is deliberate. Scripts own facts and format, where the answer should be the same every time. The model owns judgement: whether a change is risky, what a review comment is really asking, which finding matters most. An invented citation cannot reach a reader, so a reviewer only has to judge the reasoning.
+
+<Figure caption="An illustration using the demo app’s file names. The second finding cites a file the pull request did not change, so the run fails instead of producing a report.">
+
+```json title="findings.json (written by the model)" wrap
+{
+  "findings": [
+    {
+      "severity": "blocking",
+      "file": "src/Transfers.Api/Scheduling/CutoffPolicy.cs",
+      "line": 29,
+      "claim": "The cut-off is compared in UTC, not in business time."
+    },
+    {
+      "severity": "should-fix",
+      "file": "src/Transfers.Api/Transfers/TransferModels.cs",
+      "line": 8,
+      "claim": "The amount is parsed as double."
+    }
+  ]
+}
+```
+
+```txt title="render --strict" wrap hangingIndent=8
+OK      src/Transfers.Api/Scheduling/CutoffPolicy.cs:29 is in the gathered diff
+REJECT  src/Transfers.Api/Transfers/TransferModels.cs:8 is not in the gathered facts (file not changed in this pull request)
+Run failed: 1 finding cites something that was not gathered. No report written.
+```
+
+</Figure>
+
+<SectionLabel num="05" label="One agent, step by step" />
+
+## From a correlation ID to a root cause
+
+Production triage used to mean switching between log searches and several repositories to piece one request together. The triage agent turns that into one conversation that ends with evidence a person can check. The example below uses the demo app, where a refactor broke same-day transfers.
+
+<Steps label="How the triage agent works, step by step">
+  <TriageFlow slot="panel" />
+
+  <Step n={1} title="Paste a correlation ID">
+    An engineer pastes the ID from a failed request. No other prompt is needed, because the procedure is written down as a skill.
+  </Step>
+
+  <Step n={2} title="Read the map">
+    It reads the context docs to learn which services handle a transfer, where each one’s logs live, and what the event names mean, instead of guessing.
+  </Step>
+
+  <Step n={3} title="Build the log queries">
+    It writes the searches itself, scoped to those services and a time window. At work the logs live in Splunk; in the demo repo a small MCP server searches synthetic log files.
+
+```txt title="queries the agent wrote" wrap
+trace_correlation_id("7f3c9a2e-5b1d-4c8a-9e55-2a6f0c1d7b34")
+search_logs("event:EntryRejected code:EFFECTIVE_DATE_MISMATCH since:2026-11-16")
+```
+
+  </Step>
+
+  <Step n={4} title="Assemble a timeline">
+    Events from every service, in order, in UTC and in business time. Here: the transfer was requested at 15:42 Denver time, marked “after cut-off” anyway, and rejected by the ledger.
+  </Step>
+
+  <Step n={5} title="Map errors to code">
+    It finds the line that logged the error, follows it back to the decision that caused it, and checks what changed in those files since the last good release.
+
+```cs title="CutoffPolicy.cs (since v1.4.0)" wrap {3}
+public TransferSchedule Evaluate(DateTimeOffset requestedAt)
+{
+    var local = requestedAt.UtcDateTime; // was: business time
+    var businessDate = DateOnly.FromDateTime(local);
+    var afterCutoff = TimeOnly.FromDateTime(local) >= options.Value.SameDayCutoff;
+```
+
+  </Step>
+
+  <Step n={6} title="Propose a root cause, then stop">
+    A likely cause, how sure it is, what it didn’t check, and a link for every claim. Then it waits. A person approves before anything is handed to the delivery agent.
+  </Step>
+</Steps>
+
+The same run, condensed:
+
+<AgentRun run={triageRun} label="Example triage agent run on the demo app" />
+
+<VideoLoop
+  id="R1"
+  label="The triage agent in VS Code Copilot Chat, from a pasted correlation ID to a report that waits for approval"
+  caption="The full run in Copilot Chat. Note that it reads the context docs before it searches anything."
+/>
+
+The report it produces:
+
+<TriageReport />
+
+<SectionLabel num="06" label="The other agents" />
+
+## Review, delivery and pull requests
+
+The same pattern applied to the team’s most time-consuming recurring work. Each agent ends with output a person can check, and none can complete an irreversible step on its own.
+
+<AgentBlocks />
+
+<MediaSlot id="S1" caption="Code-review agent’s findings on a pull request in the demo repo, grouped into blocking, should-fix and nit. Browser frame." />
+<MediaSlot id="S2" caption="PR triage summary in Copilot Chat: build status, unanswered comments and conflicts for each open pull request. Editor frame." />
+
+<VideoLoop
+  id="R3"
+  frame="terminal"
+  label="Terminal: the ready pre-push preflight, then the gauntlet rerunning a flaky test"
+  caption="Two of the scripts: a preflight before every push, and a gauntlet that reruns a suspect test until it proves itself either way."
+/>
+
+Two more tools are worth naming. A local integration harness lets one .NET service call another on a developer’s machine with no changes to either repository. It injects a handler at start-up through process environment variables, works only in development and only on the local machine, and stops if either condition is not met. A regression search finds the change that introduced a defect across many repositories.
+
+<SectionLabel num="07" label="Guardrails and verification" />
+
+## Guardrails and verification
+
+Guardrails are what made the team willing to adopt the toolkit. Every generated change follows security instructions based on the OWASP Top 10. Those rules cover the model too: its output is treated as untrusted input, the same as text from a user or a log. New or upgraded packages go through a dependency preflight. Generated files follow the same rules as hand-written ones. And nothing irreversible happens without a person saying yes.
+
+<MayMayNot />
+
+The table is written down as an instruction file that every agent follows. The demo version:
+
+```md title=".github/instructions/safe-actions.instructions.md" wrap {14} {21-22}
+---
+applyTo: '**'
+description: What an agent may do on its own, and what needs a person's approval.
+---
+
+# Safe actions
+
+You may, without asking:
+- read code, docs, logs and tickets
+- run builds, tests and the read-only scripts in `scripts/`
+- create a local branch and commit to it
+- draft text: PR descriptions, review notes, ticket updates, replies
+
+You must stop and ask first, every time:
+- `git push`, opening or merging a pull request, deleting a branch
+- changing a ticket's status or assignee
+- sending or posting anything a person will read
+- adding or upgrading a package
+- anything that touches an environment beyond your local machine
+
+When you stop, show exactly what you are about to do (the command, the diff, the text)
+and wait for a clear yes. A yes covers that one action only.
+```
+
+<MediaSlot id="S3" caption="The delivery agent stopping before git push: the exact command and diff, waiting for a yes. Approval line annotated in the gate colour. Editor frame." />
+
+### How the approval rule is enforced
+
+A rule in a prompt is a request. These are the checks behind it.
+
+- **Dry run by default.** An agent that can push or post first shows exactly what it would do. Doing it takes a separate, explicit yes.
+- **One approval, one action.** There is no approve-everything option.
+- **Approval is tied to what was reviewed.** A yes names the commit it was given for. If the branch has moved since, the approval no longer applies.
+- **A staleness check before posting.** Before a reply or a review is posted, the agent checks that the pull request has not changed since the facts were gathered.
+- **Automation works in its own copies.** Agents that sweep many repositories use their own clones and detached worktrees, so they never touch a developer’s working copy.
+- **A preflight that fails closed.** Each run first probes what it depends on. If something is only partly available, the run stops and says so. It does not continue and return a thinner result that looks complete.
+
+Model output is not deterministic, so the design relies on output being easy to verify rather than always correct:
+
+- **Evidence over assertions.** Every finding or root cause links to a log query, a file and line, or a commit. For the pipeline agents, a script checks those links.
+- **Scripts for anything that should be repeatable.** Builds, test runs, dependency checks and digests are scripts, not prompts.
+- **People review the output.** Agent work goes through the same pull-request review as anyone else’s.
+
+<MediaSlot id="failure-story" kind="copy" caption="One honest failure story (James to supply, genericised): what went wrong with an agent, and which rule or script now prevents it." />
+
+<SectionLabel num="08" label="Measurement" />
+
+## Auditing the setup against real use
+
+Instructions and skills are easy to add and hard to remove, and each one costs context on every run. I built an audit that reads my own session history (tool calls, failures, retry loops, context compactions and token cost) and compares it with the inventory of instructions, skills and agents. It reports what goes unused, what fails often and what costs the most, and it recommends changes.
+
+The audit runs through the same validated pipeline, so every number in its report is checked against the gathered data. A decision ledger records the recommendations I declined, so they do not come back on the next run.
+
+### Context is a budget
+
+- **References load when needed.** A skill’s long reference files are read when a step needs them, not at the start.
+- **Tools return briefs, not dumps.** The log-trace parser reduces a wide log export to an ordered timeline of hops and a short brief. The brief stays the same size however large the trace is.
+- **Save, then parse.** Large pages and exports are saved to disk and parsed by a script, in place of the model reading them through a browser.
+- **Budgets are enforced in code.** The tool that tells one session what other sessions changed has a fixed budget for each level of detail.
+
+<MediaSlot id="D3" kind="card" caption="D3 “Which layer?” decision diagram (Phase 2): does it need judgement? → skill; same steps every time? → script; a rule for every change? → instruction; a whole job? → agent." />
+
+<MediaSlot id="repo-card" kind="card" caption="Demo repo card: “Run the same patterns on a fictional transfers app” → copilot-agent-toolkit-demo, with its GitHub social preview image. Show once the repo is public." />

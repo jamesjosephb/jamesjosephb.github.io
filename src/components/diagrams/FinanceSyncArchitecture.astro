@@ -1,0 +1,324 @@
+---
+/**
+ * finance-sync, diagram A: "How the pieces fit". A simplified redrawing (no ports, paths or host names).
+ * Two hand-placed layouts of the same graph: landscape on wide screens, portrait on phones and tablets; CSS shows
+ * one. The point it must make: the connector's only arrow goes to the proxy and the API, never to a database.
+ * The bullet list above it on the page is its text alternative; the SVG also has a short accessible name.
+ */
+import { baselines, cylinder, type Box } from './svg';
+
+interface Props {
+  caption: string;
+}
+const { caption } = Astro.props;
+
+type Edge = { d: string; key?: boolean; label?: { x: number; y: number; lines: string[]; anchor?: 'start' | 'middle' | 'end' } };
+type Group = { x: number; y: number; w: number; h: number; label: string; lx: number; ly: number; dashed?: boolean };
+type Layout = {
+  id: string;
+  w: number;
+  h: number;
+  size: number; // node title size
+  sub: number; // node sub-line size
+  lh: number; // line height inside nodes
+  elh: number; // line height of edge labels
+  groups: Group[];
+  outside: { x: number; y: number; anchor?: 'start' | 'end' }[];
+  nodes: Record<string, Box>;
+  edges: Edge[];
+};
+
+const T = {
+  sched: ['Scheduler'],
+  cli: ['Command-line tool', 'daily sync, monthly report'],
+  web: ['Web app and JSON API', 'listens locally only'],
+  proxy: ['HTTPS proxy', 'Tailscale, private network'],
+  fin: ['Finances database', 'SQLite'],
+  browser: ['Web browser'],
+  desktop: ['Claude Desktop'],
+  conn: ['MCP connector', 'local MCP server for Claude'],
+  bank: ['Bank feed', 'SimpleFIN Bridge, read-only'],
+  anth: ['Anthropic', 'receives what Claude reads'],
+};
+
+const wide: Layout = {
+  id: 'fsa-w',
+  w: 1240,
+  h: 700,
+  size: 15,
+  sub: 13,
+  lh: 19,
+  elh: 15,
+  groups: [
+    { x: 16, y: 40, w: 920, h: 640, label: 'Private network', lx: 32, ly: 64, dashed: true },
+    { x: 36, y: 84, w: 880, h: 388, label: 'Home computer', lx: 52, ly: 108 },
+    { x: 36, y: 516, w: 880, h: 140, label: 'Household devices', lx: 52, ly: 646 },
+  ],
+  outside: [{ x: 1224, y: 64, anchor: 'end' }],
+  nodes: {
+    sched: { x: 56, y: 124, w: 180, h: 64, lines: T.sched },
+    cli: { x: 666, y: 124, w: 230, h: 64, lines: T.cli },
+    sign: { x: 56, y: 248, w: 180, h: 84, lines: ['Sign-in database', 'users, hashed keys,', 'sessions'], db: true },
+    web: { x: 316, y: 256, w: 230, h: 64, lines: T.web },
+    fin: { x: 666, y: 248, w: 230, h: 84, lines: T.fin, db: true },
+    proxy: { x: 316, y: 380, w: 230, h: 64, lines: T.proxy },
+    browser: { x: 56, y: 556, w: 180, h: 64, lines: T.browser },
+    conn: { x: 316, y: 556, w: 230, h: 64, lines: T.conn, key: true },
+    desktop: { x: 666, y: 556, w: 230, h: 64, lines: T.desktop },
+    bank: { x: 1020, y: 104, w: 204, h: 64, lines: T.bank },
+    email: { x: 1020, y: 192, w: 204, h: 76, lines: ['Email', 'delivers the monthly', 'report PDF'] },
+    anth: { x: 1020, y: 556, w: 204, h: 64, lines: T.anth },
+  },
+  edges: [
+    { d: 'M236 156 H662' },
+    { d: 'M896 136 H1016', label: { x: 978, y: 112, lines: ['HTTPS,', 'once a day'] } },
+    { d: 'M896 176 H962 V230 H1016', label: { x: 970, y: 196, lines: ['monthly', 'PDF'], anchor: 'start' } },
+    { d: 'M781 188 V244', label: { x: 790, y: 212, lines: ['writes', 'bank data'], anchor: 'start' } },
+    { d: 'M546 288 H662', label: { x: 606, y: 314, lines: ['reads; writes', 'notes and', 'categories'] } },
+    { d: 'M316 288 H240' },
+    { d: 'M431 380 V324' },
+    { d: 'M146 556 V412 H312', label: { x: 231, y: 402, lines: ['HTTPS, sign-in'] } },
+    { d: 'M431 556 V448', key: true, label: { x: 442, y: 492, lines: ['HTTPS,', 'read-only key'], anchor: 'start' } },
+    { d: 'M666 588 H550', label: { x: 606, y: 564, lines: ['starts it,', 'local'] } },
+    { d: 'M896 588 H1016', label: { x: 978, y: 552, lines: ['questions', 'and tool', 'results'] } },
+  ],
+};
+
+const narrow: Layout = {
+  id: 'fsa-n',
+  w: 400,
+  h: 928,
+  size: 13,
+  sub: 11.5,
+  lh: 16,
+  elh: 13.5,
+  groups: [
+    { x: 6, y: 116, w: 388, h: 700, label: 'Private network', lx: 16, ly: 808, dashed: true },
+    { x: 16, y: 126, w: 368, h: 422, label: 'Home computer', lx: 28, ly: 146 },
+    { x: 16, y: 568, w: 368, h: 220, label: 'Household devices', lx: 28, ly: 780 },
+  ],
+  outside: [
+    { x: 12, y: 18 },
+    { x: 12, y: 846 },
+  ],
+  nodes: {
+    email: { x: 12, y: 28, w: 184, h: 72, lines: ['Email', 'delivers the monthly', 'report PDF'] },
+    bank: { x: 204, y: 28, w: 184, h: 72, lines: ['Bank feed', 'SimpleFIN Bridge,', 'read-only'] },
+    sched: { x: 28, y: 184, w: 120, h: 52, lines: T.sched },
+    cli: { x: 196, y: 184, w: 176, h: 52, lines: T.cli },
+    fin: { x: 196, y: 272, w: 176, h: 64, lines: T.fin, db: true },
+    sign: { x: 28, y: 368, w: 140, h: 76, lines: ['Sign-in database', 'users, hashed keys,', 'sessions'], db: true },
+    web: { x: 196, y: 380, w: 176, h: 52, lines: T.web },
+    proxy: { x: 196, y: 472, w: 176, h: 52, lines: T.proxy },
+    browser: { x: 28, y: 600, w: 140, h: 52, lines: T.browser },
+    conn: { x: 196, y: 600, w: 176, h: 52, lines: T.conn, key: true },
+    desktop: { x: 196, y: 700, w: 176, h: 52, lines: T.desktop },
+    anth: { x: 196, y: 856, w: 176, h: 56, lines: T.anth },
+  },
+  edges: [
+    { d: 'M148 210 H192' },
+    { d: 'M300 184 V104', label: { x: 308, y: 146, lines: ['HTTPS,', 'once a day'], anchor: 'start' } },
+    { d: 'M212 184 V160 H170 V104', label: { x: 162, y: 174, lines: ['monthly PDF'], anchor: 'end' } },
+    { d: 'M284 236 V268', label: { x: 276, y: 256, lines: ['writes bank data'], anchor: 'end' } },
+    { d: 'M284 380 V340', label: { x: 276, y: 354, lines: ['reads; writes notes', 'and categories'], anchor: 'end' } },
+    { d: 'M196 406 H172' },
+    { d: 'M284 472 V436' },
+    { d: 'M98 600 V498 H192', label: { x: 147, y: 490, lines: ['HTTPS, sign-in'] } },
+    { d: 'M284 600 V528', key: true, label: { x: 276, y: 562, lines: ['HTTPS, read-only key'], anchor: 'end' } },
+    { d: 'M284 700 V656', label: { x: 276, y: 682, lines: ['starts it, local'], anchor: 'end' } },
+    { d: 'M284 752 V852', label: { x: 292, y: 832, lines: ['questions and', 'tool results'], anchor: 'start' } },
+  ],
+};
+
+const layouts = [wide, narrow];
+const name =
+  'How the pieces of finance-sync fit. On a home computer: a scheduler starts the command-line tool, which fetches from the bank feed once a day over HTTPS, writes bank data to the finances database and emails the monthly PDF. The web app and JSON API reads the finances database, writes only notes and categories, and uses a separate sign-in database. Household devices reach the web app through a private-network HTTPS proxy: the web browser with a sign-in, and the MCP connector with a read-only key. Claude Desktop starts the connector and sends questions and tool results to Anthropic. The connector has no path to either database.';
+---
+
+<figure class="fsa" data-wide>
+  {
+    layouts.map((L) => (
+      <svg
+        class:list={['dg', L === wide ? 'is-wide' : 'is-narrow']}
+        viewBox={`0 0 ${L.w} ${L.h}`}
+        role="img"
+        aria-label={name}
+        style={`--size:${L.size}px; --sub:${L.sub}px`}
+      >
+        <defs>
+          <marker id={`${L.id}-a`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path class="ah" d="M0 0 L10 5 L0 10 z" />
+          </marker>
+          <marker id={`${L.id}-k`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path class="ah key" d="M0 0 L10 5 L0 10 z" />
+          </marker>
+        </defs>
+
+        {L.groups.map((g) => (
+          <g>
+            <rect class:list={['grp', { dashed: g.dashed }]} x={g.x} y={g.y} width={g.w} height={g.h} rx="14" />
+            <text class="glabel" x={g.lx} y={g.ly}>
+              {g.label.toUpperCase()}
+            </text>
+          </g>
+        ))}
+        {L.outside.map((o) => (
+          <text class="glabel" x={o.x} y={o.y} text-anchor={o.anchor ?? 'start'}>
+            OUTSIDE THE PRIVATE NETWORK
+          </text>
+        ))}
+
+        {L.edges.map((e) => (
+          <path class:list={['edge', { key: e.key }]} d={e.d} marker-end={`url(#${L.id}-${e.key ? 'k' : 'a'})`} />
+        ))}
+
+        {Object.values(L.nodes).map((b) => {
+          const ys = baselines(b, L.size, L.lh);
+          const cx = b.x + b.w / 2;
+          const c = b.db ? cylinder(b) : null;
+          return (
+            <g class:list={['node', { key: b.key, db: b.db }]}>
+              {c ? (
+                <>
+                  <path class="shape" d={c.body} />
+                  <path class="shape lid" d={c.lid} />
+                </>
+              ) : (
+                <rect class="shape" x={b.x} y={b.y} width={b.w} height={b.h} rx="10" />
+              )}
+              {b.lines.map((t, i) => (
+                <text class={i === 0 ? 'title' : 'sub'} x={cx} y={ys[i]} text-anchor="middle">
+                  {t}
+                </text>
+              ))}
+            </g>
+          );
+        })}
+
+        {L.edges
+          .filter((e) => e.label)
+          .map((e) => (
+            <text class:list={['elabel', { key: e.key }]} text-anchor={e.label!.anchor ?? 'middle'}>
+              {e.label!.lines.map((t, i) => (
+                <tspan x={e.label!.x} y={e.label!.y + i * L.elh}>
+                  {t}
+                </tspan>
+              ))}
+            </text>
+          ))}
+      </svg>
+    ))
+  }
+  <figcaption>{caption}</figcaption>
+</figure>
+
+<style>
+  .fsa {
+    position: relative;
+    z-index: 1;
+    margin: var(--s-7) 0;
+  }
+  .dg {
+    display: block;
+    width: 100%;
+    height: auto;
+    padding: var(--s-3);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    background: var(--surface);
+    box-sizing: border-box;
+  }
+  .is-wide {
+    display: none;
+  }
+  .is-narrow {
+    max-width: 30rem;
+    margin-inline: auto;
+  }
+  figcaption {
+    max-width: var(--w-prose);
+    margin-top: var(--s-3);
+    font-size: var(--fs-small);
+    color: var(--muted);
+  }
+  @media (min-width: 1100px) {
+    .fsa {
+      width: min(var(--w-wide), calc(100vw - 2 * var(--gutter)));
+      margin-inline: calc((min(var(--w-wide), calc(100vw - 2 * var(--gutter))) - 100%) / -2);
+    }
+    .is-wide {
+      display: block;
+    }
+    .is-narrow {
+      display: none;
+    }
+  }
+
+  .grp {
+    fill: var(--surface-2);
+    stroke: var(--border);
+    stroke-width: 1.5;
+  }
+  .grp.dashed {
+    fill: var(--surface);
+    stroke: var(--muted);
+    stroke-dasharray: 6 5;
+  }
+  .glabel {
+    font-family: var(--font-mono);
+    font-size: var(--sub);
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    fill: var(--muted);
+  }
+  .shape {
+    fill: var(--surface);
+    stroke: var(--border);
+    stroke-width: 1.5;
+  }
+  .db .shape {
+    stroke: var(--muted);
+  }
+  .key .shape {
+    stroke: var(--accent);
+    stroke-width: 2.5;
+  }
+  .title {
+    font-family: var(--font-text);
+    font-size: var(--size);
+    font-weight: 600;
+    fill: var(--text);
+  }
+  .sub {
+    font-family: var(--font-text);
+    font-size: var(--sub);
+    fill: var(--muted);
+  }
+  .edge {
+    fill: none;
+    stroke: var(--muted);
+    stroke-width: 1.5;
+  }
+  .edge.key {
+    stroke: var(--accent);
+    stroke-width: 2.5;
+  }
+  .ah {
+    fill: var(--muted);
+  }
+  .ah.key {
+    fill: var(--accent);
+  }
+  .elabel {
+    font-family: var(--font-mono);
+    font-size: calc(var(--sub) - 0.5px);
+    fill: var(--muted);
+    paint-order: stroke;
+    stroke: var(--surface-2);
+    stroke-width: 5px;
+    stroke-linejoin: round;
+  }
+  .elabel.key {
+    fill: var(--accent);
+  }
+</style>

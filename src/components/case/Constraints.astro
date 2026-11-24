@@ -1,0 +1,73 @@
+---
+/** The five constraints, as mono-labelled chips with one line each. */
+const items = [
+  { tag: 'Regulated', text: 'Data stays inside approved tools.' },
+  { tag: 'Multi-repo', text: 'Many services and front ends, each in its own repository.' },
+  { tag: 'Human approval', text: 'A person approves anything irreversible.', gate: true },
+  { tag: 'Voluntary', text: 'Use is optional, so it has to save time from the first day.' },
+  { tag: 'Non-deterministic', text: 'Models vary, so every output carries evidence a person can check.' },
+];
+---
+
+<ul class="constraints" role="list" data-wide>
+  {
+    items.map((c) => (
+      <li class:list={{ gate: c.gate }}>
+        <span class="tag">{c.tag}</span>
+        <span class="text">{c.text}</span>
+      </li>
+    ))
+  }
+</ul>
+
+<style>
+  .constraints {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 12.5rem), 1fr));
+    gap: var(--s-3);
+    margin: var(--s-6) 0 var(--s-7);
+    padding: 0;
+    list-style: none;
+  }
+  @media (min-width: 1100px) {
+    .constraints {
+      width: min(var(--w-content), calc(100vw - 2 * var(--gutter)));
+      margin-inline: calc((min(var(--w-content), calc(100vw - 2 * var(--gutter))) - 100%) / -2);
+      grid-template-columns: repeat(5, 1fr);
+      position: relative;
+      z-index: 1;
+    }
+  }
+  li {
+    display: grid;
+    align-content: start;
+    gap: var(--s-2);
+    margin: 0;
+    padding: var(--s-4);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    background: var(--surface);
+  }
+  .tag {
+    justify-self: start;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: var(--fs-label);
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .gate .tag {
+    background: transparent;
+    color: var(--gate);
+    box-shadow: inset 0 0 0 1.5px var(--gate);
+  }
+  .text {
+    font-size: var(--fs-small);
+    line-height: 1.45;
+    color: var(--muted);
+  }
+</style>

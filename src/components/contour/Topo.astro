@@ -1,0 +1,97 @@
+---
+/**
+ * <Topo>: a topographic map sheet that fills its positioned parent, behind the content.
+ *
+ * The map is one seamlessly tileable 1600×1600 tile (public/topo/*), generated offline by scripts/topo-gen.mjs:
+ * minor contours, index contours with elevation labels and spot heights, streams and a soft hillshade. Each layer
+ * is a CSS mask painted with a theme token, so the map follows light/dark and repeats for any page length.
+ *
+ * The tile's main summit sits at (1120, 470). Pass `anchor` (a CSS selector) to put that summit under an element,
+ * such as the portrait; a small script measures it. Without JS, or without an anchor, the summit sits at x/y.
+ * `fade` is a mask gradient that sets how strong the map is down the page (black = full, transparent = none).
+ */
+interface Props {
+  anchor?: string;
+  x?: string;
+  y?: string;
+  fade?: string;
+  class?: string;
+}
+const { anchor, x = '75%', y = '320px', fade = 'linear-gradient(#000, #000)', class: className } = Astro.props;
+---
+
+<div
+  class:list={['topo', className]}
+  aria-hidden="true"
+  data-topo
+  data-anchor={anchor}
+  style={`--ax:${x};--ay:${y};--fade:${fade}`}
+>
+  <i class="layer shade"></i>
+  <i class="layer minor"></i>
+  <i class="layer streams"></i>
+  <i class="layer index"></i>
+</div>
+
+<script>
+  // Line the tile's summit up with the anchor element (e.g. the portrait). Re-measures on resize and font load.
+  const sheets = Array.from(document.querySelectorAll<HTMLElement>('[data-topo][data-anchor]'));
+  const place = () => {
+    for (const el of sheets) {
+      const target = document.querySelector(el.dataset.anchor!);
+      if (!target) continue;
+      const a = target.getBoundingClientRect(), b = el.getBoundingClientRect();
+      el.style.setProperty('--ax', `${a.left + a.width / 2 - b.left}px`);
+      el.style.setProperty('--ay', `${a.top + a.height / 2 - b.top}px`);
+    }
+  };
+  if (sheets.length) {
+    place();
+    document.fonts?.ready.then(place);
+    window.addEventListener('load', place);
+    const ro = new ResizeObserver(place);
+    sheets.forEach((el) => el.parentElement && ro.observe(el.parentElement));
+  }
+</script>
+
+<style>
+  .topo {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+    /* Tile summit at (1120, 470) */
+    --pos: calc(var(--ax) - 1120px) calc(var(--ay) - 470px);
+  }
+  .layer {
+    position: absolute;
+    inset: 0;
+    -webkit-mask-image: var(--tile), var(--fade);
+    mask-image: var(--tile), var(--fade);
+    -webkit-mask-size: 1600px 1600px, 100% 100%;
+    mask-size: 1600px 1600px, 100% 100%;
+    -webkit-mask-repeat: repeat, no-repeat;
+    mask-repeat: repeat, no-repeat;
+    -webkit-mask-position: var(--pos), 0 0;
+    mask-position: var(--pos), 0 0;
+    -webkit-mask-composite: source-in;
+    mask-composite: intersect;
+  }
+  .shade {
+    --tile: url('/topo/shade.png');
+    background: var(--hillshade);
+  }
+  .minor {
+    --tile: url('/topo/minor.svg');
+    background: var(--contour);
+  }
+  .streams {
+    --tile: url('/topo/streams.svg');
+    background: var(--contour-stream);
+  }
+  .index {
+    --tile: url('/topo/index.svg');
+    background: var(--contour-index);
+  }
+</style>

@@ -1,0 +1,70 @@
+---
+/**
+ * <Gallery>: captioned images in a wide grid of two or three columns (one column on phones). Each can be enlarged.
+ * `aspect` sets the frame shape for every cell (default 16 / 9, for screenshots; `auto` keeps each image's own
+ * shape). In two columns, an odd last image spans the full width rather than leaving a gap. An item's `dark` is
+ * its dark-theme variant; `quality` is passed to every <Shot>.
+ */
+import type { ImageMetadata } from 'astro';
+import Shot from './Shot.astro';
+
+interface Props {
+  items: { image: ImageMetadata; dark?: ImageMetadata; alt: string; caption: string }[];
+  label: string;
+  cols?: 2 | 3;
+  aspect?: string;
+  quality?: number;
+}
+const { items, label, cols = 2, aspect, quality } = Astro.props;
+const sizes =
+  cols === 3
+    ? '(min-width: 1440px) 456px, (min-width: 760px) calc(33vw - 24px), calc(100vw - 32px)'
+    : '(min-width: 1440px) 696px, (min-width: 760px) calc(50vw - 28px), calc(100vw - 32px)';
+const fullSizes = '(min-width: 1440px) 1408px, calc(100vw - 32px)';
+const lastSpans = cols === 2 && items.length % 2 === 1;
+---
+
+<div class:list={['gallery', `cols-${cols}`]} role="group" aria-label={label} data-wide>
+  {
+    items.map((i, n) => {
+      const span = lastSpans && n === items.length - 1;
+      return (
+        <Shot
+          image={i.image}
+          dark={i.dark}
+          alt={i.alt}
+          caption={i.caption}
+          sizes={span ? fullSizes : sizes}
+          aspect={aspect}
+          quality={quality}
+          class:list={['cell', { span }]}
+        />
+      );
+    })
+  }
+</div>
+
+<style>
+  .gallery {
+    display: grid;
+    align-items: start;
+    gap: var(--s-6) var(--s-5);
+    width: min(var(--w-wide), calc(100vw - 2 * var(--gutter)));
+    margin: var(--s-7) 0;
+    margin-inline: calc((min(var(--w-wide), calc(100vw - 2 * var(--gutter))) - 100%) / -2);
+  }
+  .gallery :global(.cell) {
+    margin: 0;
+  }
+  @media (min-width: 760px) {
+    .cols-2 {
+      grid-template-columns: 1fr 1fr;
+    }
+    .gallery :global(.span) {
+      grid-column: 1 / -1;
+    }
+    .cols-3 {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+</style>

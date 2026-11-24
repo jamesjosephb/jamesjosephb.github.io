@@ -1,0 +1,137 @@
+---
+import { NAV } from '../site';
+import Monogram from './Monogram.astro';
+import ThemeToggle from './ThemeToggle.astro';
+import MobileMenu from './MobileMenu.astro';
+
+const path = Astro.url.pathname.endsWith('/') ? Astro.url.pathname : `${Astro.url.pathname}/`;
+---
+
+<header class="site-header">
+  <div class="container bar">
+    <a class="home" href="/" aria-label="James Burch, home">
+      <Monogram />
+      <span class="name">James Burch</span>
+    </a>
+
+    <nav class="desktop" aria-label="Main">
+      <ul>
+        {
+          NAV.map((item) => (
+            <li>
+              <a href={item.href} aria-current={path.startsWith(item.match) ? 'page' : undefined}>
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+      <a class="resume-pill" href="/resume/" aria-current={path.startsWith('/resume/') ? 'page' : undefined}
+        >Résumé</a
+      >
+      <ThemeToggle />
+    </nav>
+
+    <div class="mobile">
+      <MobileMenu path={path} />
+    </div>
+  </div>
+</header>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    /* Opaque: a translucent bar let body text show through while scrolling. */
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding-top: env(safe-area-inset-top);
+  }
+  .bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--s-4);
+    height: var(--header-h);
+  }
+  .home {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--s-3);
+    color: var(--text);
+    text-decoration: none;
+  }
+  .name {
+    font-family: var(--font-text);
+    font-weight: 600;
+    font-size: 1rem;
+    letter-spacing: -0.01em;
+  }
+  .desktop {
+    display: none;
+    align-items: center;
+    gap: var(--s-2);
+  }
+  .desktop ul {
+    display: flex;
+    gap: var(--s-1);
+    list-style: none;
+    margin: 0 var(--s-3) 0 0;
+    padding: 0;
+  }
+  .desktop li {
+    margin: 0;
+  }
+  .desktop ul a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 36px;
+    padding: 0 0.75em;
+    border-radius: 999px;
+    color: var(--muted);
+    font-weight: 500;
+    font-size: 0.9375rem;
+    text-decoration: none;
+    transition: color var(--t-hover) var(--ease);
+  }
+  .desktop ul a:hover,
+  .desktop ul a[aria-current='page'] {
+    color: var(--text);
+  }
+  .desktop ul a[aria-current='page'] {
+    text-decoration: underline;
+    text-decoration-color: var(--accent);
+    text-decoration-thickness: 3px;
+    text-underline-offset: 0.45em;
+  }
+  .resume-pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 36px;
+    padding: 0 0.95em;
+    margin-right: var(--s-2);
+    border: 1px solid var(--text);
+    border-radius: 999px;
+    color: var(--text);
+    font-weight: 600;
+    font-size: 0.9375rem;
+    text-decoration: none;
+  }
+  .resume-pill:hover,
+  .resume-pill[aria-current='page'] {
+    background: var(--text);
+    color: var(--bg);
+  }
+  .mobile {
+    display: flex;
+  }
+  @media (min-width: 720px) {
+    .desktop {
+      display: flex;
+    }
+    .mobile {
+      display: none;
+    }
+  }
+</style>

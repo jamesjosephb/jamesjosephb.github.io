@@ -1,0 +1,124 @@
+---
+/**
+ * <CodeTabs labels={[...]}>: wraps several fenced code blocks (Expressive Code) and shows one at a time
+ * behind an accessible tab list (arrow keys, Home/End). Without JS every block shows, one after another.
+ * Each label matches the code block at the same position.
+ */
+interface Props {
+  labels: string[];
+  /** Accessible name for the tab list. */
+  label: string;
+  caption?: string;
+}
+const { labels, label, caption } = Astro.props;
+---
+
+<figure class="code-tabs" data-code-tabs>
+  <div class="tablist" role="tablist" aria-label={label} hidden>
+    {
+      labels.map((l, i) => (
+        <button type="button" role="tab" aria-selected={i === 0 ? 'true' : 'false'} tabindex={i === 0 ? 0 : -1}>
+          {l}
+        </button>
+      ))
+    }
+  </div>
+  <div class="panels">
+    <slot />
+  </div>
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>
+
+<script>
+  let uid = 0;
+  document.querySelectorAll<HTMLElement>('[data-code-tabs]').forEach((root) => {
+    const list = root.querySelector<HTMLElement>('[role="tablist"]');
+    const tabs = Array.from(root.querySelectorAll<HTMLButtonElement>('[role="tab"]'));
+    const panels = Array.from(root.querySelectorAll<HTMLElement>('.panels > .expressive-code'));
+    if (!list || tabs.length !== panels.length || !tabs.length) return;
+    const n = ++uid;
+    tabs.forEach((t, i) => {
+      t.id = `ct-${n}-tab-${i}`;
+      const p = panels[i];
+      p.id = `ct-${n}-panel-${i}`;
+      p.setAttribute('role', 'tabpanel');
+      p.setAttribute('aria-labelledby', t.id);
+      t.setAttribute('aria-controls', p.id);
+      p.hidden = i !== 0;
+    });
+    list.hidden = false;
+    root.classList.add('is-tabbed');
+
+    const select = (i: number, focus = false) => {
+      tabs.forEach((t, j) => {
+        const on = i === j;
+        t.setAttribute('aria-selected', String(on));
+        t.tabIndex = on ? 0 : -1;
+        panels[j].hidden = !on;
+      });
+      if (focus) tabs[i].focus();
+    };
+    tabs.forEach((t, i) => {
+      t.addEventListener('click', () => select(i));
+      t.addEventListener('keydown', (e) => {
+        const last = tabs.length - 1;
+        const to =
+          e.key === 'ArrowRight' ? (i === last ? 0 : i + 1)
+          : e.key === 'ArrowLeft' ? (i === 0 ? last : i - 1)
+          : e.key === 'Home' ? 0
+          : e.key === 'End' ? last
+          : -1;
+        if (to >= 0) {
+          e.preventDefault();
+          select(to, true);
+        }
+      });
+    });
+  });
+</script>
+
+<style>
+  .code-tabs {
+    margin: var(--s-7) 0;
+  }
+  .tablist {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-2);
+    margin-bottom: var(--s-3);
+  }
+  .tablist[hidden] {
+    display: none;
+  }
+  [role='tab'] {
+    min-height: 40px;
+    padding: 0 var(--s-4);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    cursor: pointer;
+    transition: border-color var(--t-hover) var(--ease);
+  }
+  [role='tab']:hover {
+    border-color: var(--accent);
+  }
+  [role='tab'][aria-selected='true'] {
+    background: var(--text);
+    border-color: var(--text);
+    color: var(--bg);
+  }
+  .panels > :global(.expressive-code + .expressive-code) {
+    margin-top: var(--s-5);
+  }
+  .panels > :global(.expressive-code[hidden]) {
+    display: none;
+  }
+  figcaption {
+    margin-top: var(--s-3);
+    font-size: var(--fs-small);
+    color: var(--muted);
+  }
+</style>

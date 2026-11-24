@@ -1,0 +1,176 @@
+---
+import SectionLabel from '../SectionLabel.astro';
+import Button from '../Button.astro';
+import Topo from '../contour/Topo.astro';
+
+interface Props {
+  /** Show the numbered '01 · Work' label above the card (home page). */
+  sectionLabel?: boolean;
+  /** Heading level for the card title: h2 on the home page, h3 under a group heading on /work/. */
+  level?: 'h2' | 'h3';
+}
+const { sectionLabel = true, level = 'h2' } = Astro.props;
+const Title = level;
+
+const minis = [
+  { name: 'Review', line: 'Checks C# and Angular changes against the team’s own checklists before a person reviews.' },
+  { name: 'Delivery', line: 'Takes a story from ticket to tested pull request, stopping for approval where it matters.' },
+  { name: 'Production triage', line: 'Turns one correlation ID into a cross-service timeline and a likely root cause.' },
+];
+---
+
+<section class:list={['featured', { 'container section': sectionLabel }]} aria-labelledby="featured-title">
+  {sectionLabel && <SectionLabel num="01" label="Work" />}
+  <article class="band" data-reveal>
+    <div class="text">
+      <p class="label kicker">Case study · 2026</p>
+      <Title id="featured-title" class="title">A GitHub Copilot agent toolkit for a <span class="nw">multi-repo</span> fintech platform</Title>
+      <p class="summary">
+        Custom agents, skills, guardrail instructions and scripts for a multi-repo .NET and Angular codebase. I designed
+        and built the toolkit, and my team uses it for code review, delivery and production triage.
+      </p>
+      <ul class="minis">
+        {
+          minis.map((m) => (
+            <li>
+              <span class="mini-name">{m.name}</span>
+              <span class="mini-line">{m.line}</span>
+            </li>
+          ))
+        }
+      </ul>
+      <Button href="/work/agent-toolkit/" arrow>Read the case study</Button>
+    </div>
+
+    <div class="thumb" aria-hidden="true">
+      <Topo x="8%" y="92%" fade="linear-gradient(rgb(0 0 0 / 0.45), rgb(0 0 0 / 0.45))" />
+      <svg viewBox="0 0 360 300" role="presentation">
+        <g class="layers">
+          <rect x="20" y="20" width="220" height="48" rx="10" class="layer agents"></rect>
+          <text x="40" y="49">agents</text><text x="226" y="49" class="hint" text-anchor="end">a whole job</text>
+          <rect x="20" y="84" width="220" height="48" rx="10" class="layer"></rect>
+          <text x="40" y="113">skills</text><text x="226" y="113" class="hint" text-anchor="end">procedures</text>
+          <rect x="20" y="148" width="220" height="48" rx="10" class="layer"></rect>
+          <text x="40" y="177">instructions</text><text x="226" y="177" class="hint" text-anchor="end">standards</text>
+          <rect x="20" y="212" width="220" height="48" rx="10" class="layer"></rect>
+          <text x="40" y="241">scripts</text><text x="226" y="241" class="hint" text-anchor="end">deterministic</text>
+        </g>
+        <g class="side">
+          <rect x="262" y="20" width="78" height="112" rx="10" class="ctx"></rect>
+          <text x="301" y="66" text-anchor="middle">context</text><text x="301" y="86" text-anchor="middle">docs</text>
+          <rect x="262" y="148" width="78" height="112" rx="10" class="ctx"></rect>
+          <text x="301" y="194" text-anchor="middle">repo</text><text x="301" y="214" text-anchor="middle">memory</text>
+        </g>
+        <rect x="12" y="272" width="300" height="24" rx="4" class="knock"></rect>
+        <rect x="20" y="279" width="10" height="10" class="gate-sq"></rect>
+        <text x="38" y="288" class="hint gate-hint">a person approves irreversible steps</text>
+      </svg>
+    </div>
+  </article>
+</section>
+
+<style>
+  .band {
+    display: grid;
+    gap: var(--s-7);
+    padding: clamp(24px, 4vw, 56px);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    background: var(--surface);
+    transition: border-color var(--t-hover) var(--ease);
+  }
+  .band:hover {
+    border-color: var(--accent);
+  }
+  .kicker {
+    margin-bottom: var(--s-3);
+  }
+  .title {
+    font-size: var(--fs-h2);
+    view-transition-name: case-agent-toolkit;
+  }
+  .nw {
+    white-space: nowrap;
+  }
+  .summary {
+    max-width: 52ch;
+    color: var(--muted);
+    font-size: 1.125rem;
+  }
+  .minis {
+    display: grid;
+    gap: var(--s-3);
+    margin: var(--s-6) 0;
+    padding: 0;
+    list-style: none;
+  }
+  .minis li {
+    margin: 0;
+    display: grid;
+    gap: 2px;
+    padding-left: var(--s-4);
+    border-left: 3px solid var(--accent);
+  }
+  .mini-name {
+    font-family: var(--font-mono);
+    font-size: var(--fs-label);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text);
+    font-weight: 500;
+  }
+  .mini-line {
+    color: var(--muted);
+    font-size: 0.975rem;
+  }
+  .thumb {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    align-self: center;
+    border-radius: var(--r-md);
+    background: var(--surface-2);
+    padding: var(--s-5);
+  }
+  .thumb > svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    font-family: var(--font-mono);
+    font-size: 15px;
+  }
+  .layer {
+    fill: var(--surface);
+    stroke: var(--border);
+  }
+  .layer.agents {
+    stroke: var(--accent);
+    stroke-width: 2;
+  }
+  .ctx {
+    fill: none;
+    stroke: var(--border);
+    stroke-dasharray: 4 4;
+  }
+  text {
+    fill: var(--text);
+  }
+  .hint {
+    fill: var(--muted);
+    font-size: 12px;
+  }
+  .gate-sq,
+  .gate-hint {
+    fill: var(--gate);
+  }
+  /* A panel-coloured strip under the gate line, so map lines behind the thumbnail never cut it. */
+  .knock {
+    fill: var(--surface-2);
+  }
+  @media (min-width: 960px) {
+    .band {
+      grid-template-columns: 1.1fr 0.9fr;
+      align-items: center;
+    }
+  }
+</style>

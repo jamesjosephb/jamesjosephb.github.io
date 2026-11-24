@@ -1,0 +1,50 @@
+---
+import Base from '../layouts/Base.astro';
+import Button from '../components/Button.astro';
+import Topo from '../components/contour/Topo.astro';
+---
+
+<Base title="Page not found" noindex>
+  <div class="head-band">
+  <Topo x="78%" y="45%" />
+  <section class="container page-head nf on-map">
+    <p class="label code">404</p>
+    <h1>Page not found</h1>
+    <p class="lede">This page may have moved when the site was redesigned.</p>
+    <div class="actions">
+      <Button href="/" arrow>Home</Button>
+      <Button href="/work/agent-toolkit/" variant="secondary" arrow>Agent toolkit case study</Button>
+      <Button href="/resume/" variant="text">Résumé</Button>
+    </div>
+  </section>
+  </div>
+</Base>
+
+<style>
+  .head-band {
+    position: relative;
+    isolation: isolate;
+  }
+  .nf {
+    min-height: 55vh;
+  }
+  .code {
+    margin-bottom: var(--s-4);
+    color: var(--accent);
+  }
+  h1 {
+    font-size: var(--fs-display);
+    line-height: 0.98;
+    letter-spacing: -0.035em;
+    max-width: 14ch;
+  }
+  .lede {
+    margin-bottom: var(--s-6);
+  }
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--s-3) var(--s-5);
+  }
+</style>

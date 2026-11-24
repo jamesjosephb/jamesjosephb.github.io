@@ -1,0 +1,86 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+
+type Props = HTMLAttributes<'a'> & {
+  href: string;
+  variant?: 'primary' | 'secondary' | 'pill' | 'text';
+  arrow?: boolean;
+};
+
+const { href, variant = 'primary', arrow = false, class: className, ...rest } = Astro.props;
+---
+
+<a href={href} class:list={['btn', variant, className]} {...rest}>
+  <span><slot /></span>{arrow && <span class="arrow" aria-hidden="true">→</span>}
+</a>
+
+<style>
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5em;
+    min-height: 44px;
+    padding: 0 1.15em;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    font-family: var(--font-text);
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1;
+    text-decoration: none;
+    white-space: nowrap;
+    transition:
+      transform var(--t-hover) var(--ease),
+      border-color var(--t-hover) var(--ease);
+  }
+  .btn:hover {
+    text-decoration: none;
+  }
+  .arrow {
+    display: inline-block;
+    transition: transform var(--t-hover) var(--ease);
+  }
+  .btn:hover .arrow {
+    transform: translateX(4px);
+  }
+  .primary {
+    background: var(--accent-fill);
+    color: var(--on-accent);
+    border-color: var(--accent-fill);
+  }
+  .primary:hover {
+    transform: translateY(-1px);
+  }
+  .secondary {
+    background: transparent;
+    color: var(--text);
+    border-color: var(--border);
+  }
+  .secondary:hover {
+    border-color: var(--accent);
+  }
+  .pill {
+    min-height: 36px;
+    padding: 0 0.95em;
+    font-size: 0.9375rem;
+    color: var(--text);
+    border-color: var(--text);
+  }
+  .pill:hover {
+    background: var(--text);
+    color: var(--bg);
+  }
+  .text {
+    min-height: 44px;
+    padding: 0;
+    border-radius: 0;
+    color: var(--text);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.25em;
+  }
+  .text:hover {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+  }
+</style>

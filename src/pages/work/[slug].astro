@@ -1,0 +1,325 @@
+---
+import { getCollection, render, type CollectionEntry } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import MetaRow from '../../components/case/MetaRow.astro';
+import Toc from '../../components/case/Toc.astro';
+import Topo from '../../components/contour/Topo.astro';
+import KeyValue from '../../components/case/KeyValue.astro';
+import Shot from '../../components/case/Shot.astro';
+import Zoom from '../../components/case/Zoom.astro';
+import { getWork, workHref } from '../../lib/work';
+import { SITE } from '../../site';
+
+export async function getStaticPaths() {
+  const entries = await getCollection('work', ({ data }) => import.meta.env.DEV || !data.draft);
+  return entries.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+}
+
+const { entry } = Astro.props as { entry: CollectionEntry<'work'> };
+const { Content, headings } = await render(entry);
+const d = entry.data;
+
+// Footer: the next entry in /work/ order, wrapping round to the first.
+const all = await getWork();
+const at = all.findIndex((e) => e.id === entry.id);
+const next = all.length > 1 ? all[(at + 1) % all.length] : undefined;
+// Keep hyphenated words (e.g. "multi-repo") on one line in the big title.
+const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+const titleHtml = esc(d.title).replace(/(\S+-\S+)/g, '<span class="nw">$1</span>');
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: d.title,
+  description: d.summary,
+  url: new URL(Astro.url.pathname, Astro.site).href,
+  author: { '@type': 'Person', name: SITE.name, url: Astro.site?.href },
+  about: d.stack,
+};
+---
+
+<Base
+  title={d.title}
+  description={d.summary}
+  ogType="article"
+  ogImage={d.ogImage}
+  ogImageAlt={d.ogImageAlt}
+  jsonLd={jsonLd}
+>
+  <Topo
+    x="88%"
+    y="60px"
+    fade="linear-gradient(to bottom, rgb(0 0 0 / 0.8) 0, rgb(0 0 0 / 0.8) 300px, rgb(0 0 0 / 0.35) 520px, rgb(0 0 0 / 0.35) 100%)"
+  />
+  <article class="case">
+    <div class="head-band">
+    <header class="case-col case-head on-map">
+      <p class="crumb"><a href="/work/"><span aria-hidden="true">←</span> Work</a></p>
+      <p class="label kicker">{d.eyebrow}</p>
+      <h1 style={d.transitionName ? `view-transition-name:${d.transitionName}` : undefined} set:html={titleHtml} />
+      <p class="lede outcome">{d.summary}</p>
+      <MetaRow role={d.role} period={d.period} stack={d.stack} setting={d.setting} />
+      {d.draft && <p class="draft">Draft: visible only in local dev.</p>}
+    </header>
+    </div>
+
+    {
+      d.cover && (
+        <div class="case-col">
+          <Shot
+            image={d.cover}
+            dark={d.coverDark}
+            alt={d.coverAlt ?? ''}
+            caption={d.coverCaption ?? ''}
+            aspect="auto"
+            quality={d.coverQuality}
+            wide
+            eager
+            class="cover"
+          />
+        </div>
+      )
+    }
+    {
+      d.glance.length > 0 && (
+        <div class="case-col">
+          <KeyValue rows={d.glance} label="At a glance" variant="glance" />
+        </div>
+      )
+    }
+
+    <div class="case-col case-body">
+      {d.toc && <Toc headings={headings} />}
+      <div class="content">
+        <Content />
+      </div>
+    </div>
+
+    <nav class="case-col case-foot" aria-label="More work">
+      <a class="all" href="/work/"><span aria-hidden="true">←</span> All work</a>
+      {
+        next && (
+          <a class="next" href={workHref(next)}>
+            <span class="label">Next</span>
+            <span class="next-title">
+              {next.data.title} <span aria-hidden="true">→</span>
+            </span>
+          </a>
+        )
+      }
+    </nav>
+  </article>
+  <Zoom />
+</Base>
+
+<style>
+  .case {
+    padding-bottom: var(--section-gap);
+  }
+  .head-band {
+    position: relative;
+    isolation: isolate;
+  }
+  .case-col {
+    width: min(var(--w-prose), calc(100% - 2 * var(--gutter)));
+    margin-inline: auto;
+  }
+  .case-head {
+    padding-block: clamp(48px, 8vw, 112px) var(--s-4);
+  }
+  .case-head :global(.nw) {
+    white-space: nowrap;
+  }
+  .crumb {
+    margin-bottom: var(--s-5);
+    font-family: var(--font-mono);
+    font-size: var(--fs-label);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .crumb a {
+    color: var(--muted);
+    text-decoration: none;
+  }
+  .crumb a:hover {
+    color: var(--accent);
+  }
+  .case-col :global(.cover) {
+    margin-top: 0;
+  }
+  .case-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--s-5) var(--s-7);
+    margin-top: var(--section-gap);
+    padding-top: var(--s-6);
+    border-top: 1px solid var(--border);
+  }
+  .case-foot a {
+    text-decoration: none;
+  }
+  .all {
+    font-weight: 600;
+    color: var(--accent);
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+  .next {
+    display: grid;
+    gap: var(--s-1);
+    max-width: 36ch;
+    margin-left: auto;
+    text-align: right;
+    color: var(--text);
+  }
+  .next .label {
+    color: var(--muted);
+  }
+  .next-title {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+  }
+  .next:hover .next-title {
+    color: var(--accent);
+  }
+  .kicker {
+    margin-bottom: var(--s-4);
+    color: var(--accent);
+  }
+  .outcome {
+    margin-bottom: var(--s-7);
+    color: var(--text);
+  }
+  .draft {
+    margin-top: var(--s-4);
+    font-family: var(--font-mono);
+    font-size: var(--fs-label);
+    color: var(--gate);
+  }
+  .case-body {
+    position: relative;
+  }
+
+  /* MDX body */
+  .content :global(> h2) {
+    margin-bottom: var(--s-5);
+    scroll-margin-top: calc(var(--header-h) + 24px);
+  }
+  .content :global(> .section-label) {
+    margin-top: var(--section-gap);
+    margin-bottom: var(--s-4);
+  }
+  .content :global(> .section-label:first-child) {
+    margin-top: var(--s-6);
+  }
+  .content :global(> h3) {
+    margin-top: var(--s-7);
+  }
+  .content :global(> ul:not([role='list'])),
+  .content :global(> ol:not([role='list'])) {
+    padding-left: 1.25em;
+  }
+  .content :global(> ul:not([role='list']) li::marker) {
+    color: var(--accent);
+  }
+  .content :global(strong) {
+    font-weight: 600;
+  }
+  .content :global(> .expressive-code) {
+    margin: var(--s-6) 0;
+  }
+  .content :global(> blockquote) {
+    margin: var(--s-7) 0;
+    padding: 0 0 0 var(--s-5);
+    border-left: 4px solid var(--accent);
+    font-family: var(--font-display);
+    font-size: var(--fs-h3);
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+  }
+  .content :global(> blockquote p) {
+    margin: 0;
+  }
+  /* Markdown tables, e.g. a list of tools: framed like the other figures, scrolling sideways on narrow screens. */
+  .content :global(> table) {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+    margin: var(--s-6) 0;
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    background: var(--surface);
+    border-collapse: collapse;
+    font-size: 0.9375rem;
+    line-height: 1.45;
+  }
+  .content :global(> table th),
+  .content :global(> table td) {
+    padding: var(--s-3) var(--s-4);
+    text-align: left;
+    vertical-align: top;
+  }
+  .content :global(> table th) {
+    font-family: var(--font-mono);
+    font-size: var(--fs-label);
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    border-bottom: 1px solid var(--border);
+  }
+  .content :global(> table tbody tr + tr td) {
+    border-top: 1px solid var(--border);
+  }
+  .content :global(> table code) {
+    white-space: nowrap;
+  }
+  /* Phones: each row becomes a small block (first cell, then the second under it); the header row is kept for
+     screen readers only. */
+  @media (max-width: 639px) {
+    .content :global(> table),
+    .content :global(> table tbody),
+    .content :global(> table tr),
+    .content :global(> table td) {
+      display: block;
+    }
+    .content :global(> table thead) {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+    .content :global(> table td:first-child) {
+      padding-bottom: var(--s-1);
+    }
+    .content :global(> table td + td) {
+      padding-top: 0;
+    }
+    .content :global(> table tbody tr + tr td + td) {
+      border-top: 0;
+    }
+  }
+  .content :global(.next-links) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--s-4) var(--s-6);
+    margin-top: var(--s-6);
+  }
+  .content :global(.claim) {
+    margin: var(--s-6) 0;
+    padding: var(--s-5);
+    border-radius: var(--r-md);
+    background: var(--surface-2);
+    font-size: 1.125rem;
+  }
+</style>

@@ -1,0 +1,106 @@
+---
+import Base from '../../layouts/Base.astro';
+import Topo from '../../components/contour/Topo.astro';
+import FeaturedCase from '../../components/home/FeaturedCase.astro';
+import WorkRow from '../../components/work/WorkRow.astro';
+import { getWork, workHref } from '../../lib/work';
+import { SITE } from '../../site';
+
+// Only published entries reach the production build, so every row here links to a real page.
+const all = await getWork();
+const featured = all.find((e) => e.data.featured);
+const professional = all.filter((e) => e.data.kind === 'professional' && e !== featured);
+const personal = all.filter((e) => e.data.kind === 'personal');
+const proCount = professional.length + (featured ? 1 : 0);
+
+const intro =
+  (proCount > 1 ? 'Case studies from my work at Charles Schwab' : 'A case study from my work at Charles Schwab') +
+  (personal.length ? (personal.length > 1 ? ', followed by personal projects.' : ', followed by a personal project.') : '.');
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: `Work · ${SITE.name}`,
+  url: new URL('/work/', Astro.site).href,
+  hasPart: all.map((e) => ({ '@type': 'CreativeWork', name: e.data.title, url: new URL(workHref(e), Astro.site).href })),
+};
+---
+
+<Base
+  title="Work"
+  description="Work by James Burch: a GitHub Copilot agent toolkit for a multi-repo fintech platform, and two personal projects built with AI coding agents: an off-road driving game and a private finance tool with an MCP connector."
+  jsonLd={jsonLd}
+>
+  <Topo
+    x="85%"
+    y="80px"
+    fade="linear-gradient(to bottom, rgb(0 0 0 / 0.8) 0, rgb(0 0 0 / 0.8) 300px, rgb(0 0 0 / 0.35) 520px, rgb(0 0 0 / 0.35) 100%)"
+  />
+  <div class="head-band">
+    <header class="container page-head on-map">
+      <h1>Work</h1>
+      <p class="lede">
+        {intro} The Schwab work is described without internal names, code or figures.
+      </p>
+    </header>
+  </div>
+
+  <div class="container groups">
+    {
+      proCount > 0 && (
+        <section class="group" aria-labelledby="g-pro">
+          <h2 id="g-pro" class="label group-head halo">Professional work</h2>
+          {featured && <FeaturedCase sectionLabel={false} level="h3" />}
+          {professional.length > 0 && (
+            <div class="rows">
+              {professional.map((e, i) => (
+                <WorkRow entry={e} index={i} />
+              ))}
+            </div>
+          )}
+        </section>
+      )
+    }
+    {
+      personal.length > 0 && (
+        <section class="group" aria-labelledby="g-personal">
+          <h2 id="g-personal" class="label group-head halo">Personal projects</h2>
+          <div class="rows">
+            {personal.map((e, i) => (
+              <WorkRow entry={e} index={i} />
+            ))}
+          </div>
+        </section>
+      )
+    }
+  </div>
+</Base>
+
+<style>
+  .head-band {
+    position: relative;
+    isolation: isolate;
+  }
+  h1 {
+    margin-bottom: var(--s-4);
+  }
+  .groups {
+    display: grid;
+    gap: var(--section-gap);
+    padding-bottom: var(--section-gap);
+  }
+  .group-head {
+    margin: 0 0 var(--s-5);
+    padding-bottom: var(--s-3);
+    border-bottom: 1px solid var(--border);
+    color: var(--accent);
+  }
+  .rows {
+    display: grid;
+    gap: var(--s-5);
+    margin-top: var(--s-5);
+  }
+  .group-head + .rows {
+    margin-top: 0;
+  }
+</style>

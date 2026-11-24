@@ -1,0 +1,206 @@
+---
+/**
+ * <Toc>: "On this page" for a case study.
+ * - Wide screens (1320px+) with JS: a sticky rail in the right margin of the text column (the parent must be position: relative).
+ *   It highlights the current section and fades out while a wide figure passes under it.
+ * - Phones, narrower screens and no JS: a collapsible "On this page" list above the body.
+ */
+import type { MarkdownHeading } from 'astro';
+
+interface Props {
+  headings: MarkdownHeading[];
+}
+const items = Astro.props.headings.filter((h) => h.depth === 2);
+const num = (i: number) => String(i + 1).padStart(2, '0');
+---
+
+<details class="toc-inline">
+  <summary><span>On this page</span></summary>
+  <ol role="list">
+    {
+      items.map((h, i) => (
+        <li>
+          <a href={`#${h.slug}`}>
+            <span class="n">{num(i)}</span> {h.text}
+          </a>
+        </li>
+      ))
+    }
+  </ol>
+</details>
+
+<aside class="toc-rail" aria-label="On this page">
+  <nav data-toc>
+    <p class="head">On this page</p>
+    <ol role="list">
+      {
+        items.map((h, i) => (
+          <li>
+            <a href={`#${h.slug}`} data-toc-link={h.slug}>
+              <span class="n">{num(i)}</span>
+              <span>{h.text}</span>
+            </a>
+          </li>
+        ))
+      }
+    </ol>
+  </nav>
+</aside>
+
+<script>
+  const nav = document.querySelector<HTMLElement>('[data-toc]');
+  if (nav) {
+    const links = new Map<string, HTMLAnchorElement>();
+    nav.querySelectorAll<HTMLAnchorElement>('[data-toc-link]').forEach((a) => links.set(a.dataset.tocLink!, a));
+    const heads = [...links.keys()].map((id) => document.getElementById(id)).filter((h): h is HTMLElement => !!h);
+
+    // Current section = the last heading above the top third of the viewport.
+    const wide = Array.from(document.querySelectorAll<HTMLElement>('[data-wide], .figure.wide, .video-loop.wide'));
+    let ticking = false;
+    const update = () => {
+      ticking = false;
+      const line = window.innerHeight * 0.33;
+      let current = heads[0]?.id;
+      for (const h of heads) if (h.getBoundingClientRect().top <= line) current = h.id;
+      links.forEach((a, id) => {
+        if (id === current) a.setAttribute('aria-current', 'location');
+        else a.removeAttribute('aria-current');
+      });
+      // Hide the rail while a wide element overlaps it.
+      const r = nav.getBoundingClientRect();
+      const covered = wide.some((el) => {
+        const b = el.getBoundingClientRect();
+        return b.top < r.bottom && b.bottom > r.top && b.right > r.left;
+      });
+      nav.classList.toggle('is-covered', covered);
+    };
+    const onScroll = () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(update);
+      }
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    update();
+  }
+</script>
+
+<style>
+  .n {
+    font-family: var(--font-mono);
+    font-size: var(--fs-label);
+    color: var(--muted);
+  }
+  ol {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  li {
+    margin: 0;
+  }
+
+  /* Inline (phones, narrower screens, no JS) */
+  .toc-inline {
+    margin: var(--s-6) 0 var(--s-7);
+    border-block: 1px solid var(--border);
+  }
+  .toc-inline summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 48px;
+    cursor: pointer;
+    list-style: none;
+    font-family: var(--font-mono);
+    font-size: var(--fs-label);
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .toc-inline summary::-webkit-details-marker {
+    display: none;
+  }
+  .toc-inline summary::after {
+    content: '+';
+    font-size: 1.25rem;
+    color: var(--accent);
+  }
+  .toc-inline[open] summary::after {
+    content: '−';
+  }
+  .toc-inline ol {
+    padding-bottom: var(--s-4);
+  }
+  .toc-inline a {
+    display: block;
+    padding: var(--s-2) 0;
+    color: var(--text);
+    text-decoration: none;
+  }
+  .toc-inline a:hover {
+    color: var(--accent);
+  }
+
+  /* Rail (wide screens with JS) */
+  .toc-rail {
+    display: none;
+  }
+  @media (min-width: 1320px) {
+    :global(.js) .toc-inline {
+      display: none;
+    }
+    :global(.js) .toc-rail {
+      display: block;
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: calc(100% + 40px);
+      width: 13rem;
+    }
+  }
+  nav {
+    position: sticky;
+    top: calc(var(--header-h) + 32px);
+    transition: opacity var(--t-ui) var(--ease);
+  }
+  nav.is-covered {
+    opacity: 0;
+    visibility: hidden;
+  }
+  .head {
+    margin-bottom: var(--s-3);
+    font-family: var(--font-mono);
+    font-size: var(--fs-label);
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  nav a {
+    display: grid;
+    grid-template-columns: 2.2em 1fr;
+    gap: 0;
+    padding: 6px 0 6px var(--s-3);
+    border-left: 2px solid var(--border);
+    color: var(--muted);
+    font-size: 0.875rem;
+    line-height: 1.35;
+    text-decoration: none;
+    transition:
+      color var(--t-hover) var(--ease),
+      border-color var(--t-hover) var(--ease);
+  }
+  nav a:hover {
+    color: var(--text);
+  }
+  nav a[aria-current] {
+    border-left-color: var(--accent);
+    color: var(--text);
+    font-weight: 500;
+  }
+  nav a[aria-current] .n {
+    color: var(--accent);
+  }
+</style>

@@ -1,0 +1,91 @@
+---
+/** Role · When · Stack · Setting, under a case-study title. "When" is left out when there is no period. */
+interface Props {
+  role: string;
+  period?: string;
+  stack?: string[];
+  setting?: string;
+}
+const { role, period, stack = [], setting } = Astro.props;
+const items = [
+  { k: 'Role', v: role },
+  ...(period ? [{ k: 'When', v: period }] : []),
+  ...(setting ? [{ k: 'Setting', v: setting }] : []),
+];
+---
+
+<dl class="meta" style={`--meta-cols: ${items.length}`}>
+  {
+    items.map((i) => (
+      <div class="item">
+        <dt>{i.k}</dt>
+        <dd>{i.v}</dd>
+      </div>
+    ))
+  }
+  {
+    stack.length > 0 && (
+      <div class="item stack">
+        <dt>Stack</dt>
+        <dd>
+          <ul role="list">
+            {stack.map((s) => (
+              <li>{s}</li>
+            ))}
+          </ul>
+        </dd>
+      </div>
+    )
+  }
+</dl>
+
+<style>
+  .meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
+    gap: var(--s-5) var(--s-6);
+    margin: 0;
+    padding-top: var(--s-5);
+    border-top: 1px solid var(--border);
+  }
+  .item {
+    min-width: 0;
+  }
+  .stack {
+    grid-column: 1 / -1;
+  }
+  dt {
+    margin-bottom: var(--s-1);
+    font-family: var(--font-mono);
+    font-size: var(--fs-label);
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  dd {
+    margin: 0;
+    font-size: 1rem;
+  }
+  ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  li {
+    margin: 0;
+    padding: 2px 10px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+  }
+  @media (min-width: 900px) {
+    .meta {
+      grid-template-columns: repeat(var(--meta-cols, 3), 1fr);
+    }
+  }
+</style>
